@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <SDL2/SDL.h>
-#include <unistd.h>
-#include <sys/time.h>
+#include <sys/timeb.h>
 
 #include "trampoline.h"
 #include "ball.h"
@@ -154,14 +152,14 @@ void draw_ball(const ball *const b)
     SDL_RenderDrawPoints(renderer, points, 60);
 }
 
-void main_loop_iter(const uint32_t delay_ms, const bool calc)
+void main_loop_iter(const Uint32 delay_ms, const bool calc)
 {
     struct trampoline_list *tl;
     struct ball_list *bl;
-    struct timeval tv0, tv1;
+    struct timeb tb0, tb1;
 
     clock_t t0 = clock();
-    gettimeofday(&tv0, NULL);
+    ftime(&tb0);
 
     // Draw a black background
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -207,8 +205,8 @@ void main_loop_iter(const uint32_t delay_ms, const bool calc)
     if (ms_to_wait > 0) SDL_Delay(ms_to_wait);
     //if (ms_to_wait > 0) usleep(1000 * ms_to_wait);
 
-    gettimeofday(&tv1, NULL);
-    double dt_ms = 1000 * (tv1.tv_sec - tv0.tv_sec) + 1e-3 * (tv1.tv_usec - tv0.tv_usec);
+    ftime(&tb1);
+    long dt_ms = 1000 * (tb1.time - tb0.time) + (tb1.millitm - tb0.millitm);
 
     printf("%.1f fps - ", 1e3 / dt_ms);
 }
