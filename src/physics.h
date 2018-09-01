@@ -1,0 +1,21 @@
+#ifndef PHYSICS_H
+#define PHYSICS_H
+
+/*
+ * We need some units!
+ * 
+ * unit of distance: pixel
+ * unit of time: second
+ * unit of mass: arb.u. = 1
+ * unit of momentum: pixel / sec
+ * unit of force: pixel * sec^-2
+ * unit for k: sec^-2
+ */
+
+#define g 700
+
+typedef struct _vector2f {
+    float x, y;
+} vector2f;
+
+#endif
