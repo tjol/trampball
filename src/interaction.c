@@ -1,4 +1,9 @@
-#include <alloca.h>
+#ifdef _MSC_VER
+#  include <malloc.h>
+#else
+#  include <alloca.h>
+#endif
+
 #include <math.h>
 #include <string.h>
 

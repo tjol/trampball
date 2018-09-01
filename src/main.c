@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <sys/timeb.h>
 
 #include "trampoline.h"
