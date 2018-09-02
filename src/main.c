@@ -237,7 +237,7 @@ void main_loop_iter(const Uint32 delay_ms, const bool calc)
 
             iterate_ball(bl->b, delay_ms);
         }
-        
+
         clock_t t1_calc = clock();
         double ms_in_calc = (1000.0 * (t1_calc-t0_calc)) / CLOCKS_PER_SEC;
         printf("calculation in %g us.                \r",

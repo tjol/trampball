@@ -83,7 +83,7 @@ attachment *find_ball_attached(trampoline *const t, const ball *const b)
             return a;
         a = a->next;
     }
-    
+
     return NULL;
 }
 
@@ -114,7 +114,7 @@ static inline void trampoline_advance(const vector2f *const speed_in,
         accel_out[i].x = this_accel_x - speed_in[i].x * damping;
         accel_out[i].y = this_accel_y - speed_in[i].y * damping - g;
     }
-    
+
     accel_out[0] = (vector2f) {0, 0};
     accel_out[n_anchors-1] = (vector2f) {0, 0};
 
@@ -123,8 +123,8 @@ static inline void trampoline_advance(const vector2f *const speed_in,
         speed_out[0] = (vector2f) {0, 0};
         speed_out[n_anchors-1] = (vector2f) {0, 0};
         return;
-    } 
-    
+    }
+
     for (i=0; i<n_anchors; ++i) {
         speed_out[i].x = speed_in[i].x + accel_out[i].x * dt;
         speed_out[i].y = speed_in[i].y + accel_out[i].y * dt;
@@ -181,7 +181,7 @@ void iterate_trampoline(trampoline *const t, const float dt_ms)
 
         trampoline_advance(t->speed, t->offsets, attached_mass, v0, a0,
                            n_anchors, dx, 0, k, dm, t->damping);
-        
+
         float v_max = 0;
         for (i=0; i<n_anchors; ++i) {
             x_tmp[i].x = t->offsets[i].x + v0[i].x * dt/2;
@@ -228,7 +228,7 @@ void iterate_trampoline(trampoline *const t, const float dt_ms)
         trampoline_advance(v_tmp, x_tmp, attached_mass, v3, a3, n_anchors,
                            dx, dt, k, dm, t->damping);
 
-        /* save the old positions in x_tmp. 
+        /* save the old positions in x_tmp.
            we'll need them to move the ball(s)! */
         memcpy(x_tmp, t->offsets, n_anchors * sizeof(vector2f));
 
@@ -265,7 +265,7 @@ void iterate_trampoline(trampoline *const t, const float dt_ms)
             a->b->speed.x += gravity_slip.x;
             a->b->speed.y += gravity_slip.y;
 
-            float orthogal_speed = (a->b->speed.y * a->direction_n.x) - 
+            float orthogal_speed = (a->b->speed.y * a->direction_n.x) -
                                    (a->b->speed.x * a->direction_n.y);
             vector2f orthogal_velocity = {orthogal_speed * a->direction_n.y,
                                         - orthogal_speed * a->direction_n.x};
@@ -275,7 +275,7 @@ void iterate_trampoline(trampoline *const t, const float dt_ms)
 
             vector2f speed_change = {new_speed.x - a->b->speed.x,
                                      new_speed.y - a->b->speed.y};
-            
+
             // can only push, not pull.
             if (((a->direction_n.x > 0) && (speed_change.x > 0)) ||
                 ((a->direction_n.x < 0) && (speed_change.x < 0))) {

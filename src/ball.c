@@ -7,7 +7,7 @@ ball *new_ball()
     b->mass = BALL_MASS;
     b->radius = BALL_RADIUS;
     b->remote_controlled = false;
-	b->applied_force = (vector2f) {0, 0};
+    b->applied_force = (vector2f) {0, 0};
     b->bounce = BALL_BOUNCE;
     return b;
 }

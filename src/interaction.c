@@ -41,7 +41,7 @@ bool collide_ball_trampoline(ball *const b, trampoline *const t)
         if (y < bb_bottom || y > bb_top) continue;
         x = t_x + i*dx + t->offsets[i].x;
         if (x < bb_left || x > bb_right) continue;
-        
+
         // We're within the bounding box rect.
         float delta_x = b->position.x - x;
         float delta_y = b->position.y - y;
@@ -112,7 +112,7 @@ bool collide_ball_trampoline(ball *const b, trampoline *const t)
             j = 0;
         }
     }
-    float dir_magn = sqrtf(direction.x*direction.x + 
+    float dir_magn = sqrtf(direction.x*direction.x +
                            direction.y*direction.y);
     a->direction_n.x = direction.x / dir_magn;
     a->direction_n.y = direction.y / dir_magn;
@@ -168,9 +168,9 @@ bool collide_ball_ball(ball *const b1, ball *const b2)
         float dist = sqrtf(dist_sq);
         vector2f sep_n = { sep.x/dist, sep.y/dist };
         vector2f momentum_transfer = {
-            (b1->speed.x * b1->mass * fabsf(sep_n.x) - 
+            (b1->speed.x * b1->mass * fabsf(sep_n.x) -
              b2->speed.x * b2->mass * fabsf(sep_n.x)),
-            (b1->speed.y * b1->mass * fabsf(sep_n.y) - 
+            (b1->speed.y * b1->mass * fabsf(sep_n.y) -
              b2->speed.y * b2->mass * fabsf(sep_n.y)),
         };
 
@@ -232,7 +232,7 @@ check_perpendicular:
         goto collision_detected;
     else
         return 0;
-    
+
 collision_detected:
     /* reflect off of the line */
     line_vec_hat = (vector2f) { extent.x / length, extent.y / length };

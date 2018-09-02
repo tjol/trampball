@@ -3,7 +3,7 @@
 
 /*
  * We need some units!
- * 
+ *
  * unit of distance: pixel
  * unit of time: second
  * unit of mass: arb.u. = 1
