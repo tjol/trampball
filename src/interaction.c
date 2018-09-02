@@ -191,7 +191,7 @@ bool collide_ball_ball(ball *const b1, ball *const b2)
 
 static int collide_ball_line(ball *const b, vector2i pos, vector2i extent)
 {
-    vector2f offset, line_vec_hat;
+    vector2f offset, offset_hat, line_vec_hat;
     float length, offset_sq, dist;
 
     vector2i end_pos = { pos.x + extent.x, pos.y + extent.y };
@@ -213,12 +213,21 @@ static int collide_ball_line(ball *const b, vector2i pos, vector2i extent)
 
 check_corner:
     offset_sq = offset.x*offset.x + offset.y*offset.y;
-    if (offset_sq <= r_sq) {
-        length = sqrtf(extent.x*extent.x + extent.y*extent.y);
-        dist = sqrtf(offset_sq);
-        goto collision_detected;
-    } else {
+    if (offset_sq > r_sq) {
         return 0;
+    } else {
+        // length = sqrtf(extent.x*extent.x + extent.y*extent.y);
+        dist = sqrtf(offset_sq);
+        /* repel any movement towards the corner */
+        offset_hat = (vector2f) { offset.x/dist, offset.y/dist };
+        float speed_towards = b->speed.x * fabsf(offset_hat.x) +
+                              b->speed.y * fabsf(offset_hat.y);
+        b->speed.x = b->speed.x - speed_towards * offset_hat.x;
+        b->speed.y = b->speed.y - speed_towards * offset_hat.y;
+
+        b->position.x += offset_hat.x * (b->radius - dist);
+        b->position.y += offset_hat.y * (b->radius - dist);
+        return 1;
     }
 
 check_perpendicular:
@@ -228,22 +237,20 @@ check_perpendicular:
     */
     length = sqrtf(extent.x*extent.x + extent.y*extent.y);
     dist = fabsf((offset.x * extent.y - offset.y * extent.x) / length);
-    if (dist <= b->radius)
-        goto collision_detected;
-    else
+    if (dist > b->radius) {
         return 0;
+    } else {
+        /* reflect off of the line */
+        line_vec_hat = (vector2f) { extent.x / length, extent.y / length };
+        float speed_along = b->speed.x * line_vec_hat.x + b->speed.y * line_vec_hat.y;
+        vector2f velocity_along = { speed_along * line_vec_hat.x, speed_along * line_vec_hat.y };
+        b->speed.x = -b->bounce * (b->speed.x - velocity_along.x) + velocity_along.x;
+        b->speed.y = -b->bounce * (b->speed.y - velocity_along.y) + velocity_along.y;
 
-collision_detected:
-    /* reflect off of the line */
-    line_vec_hat = (vector2f) { extent.x / length, extent.y / length };
-    float speed_along = b->speed.x * line_vec_hat.x + b->speed.y * line_vec_hat.y;
-    vector2f velocity_along = { speed_along * line_vec_hat.x, speed_along * line_vec_hat.y };
-    b->speed.x = -b->bounce * (b->speed.x - velocity_along.x) + velocity_along.x;
-    b->speed.y = -b->bounce * (b->speed.y - velocity_along.y) + velocity_along.y;
-
-    b->position.x -= line_vec_hat.y * (b->radius - dist);
-    b->position.y += line_vec_hat.x * (b->radius - dist);
-    return 1;
+        b->position.x -= line_vec_hat.y * (b->radius - dist);
+        b->position.y += line_vec_hat.x * (b->radius - dist);
+        return 1;
+    }
 }
 
 bool collide_ball_wall(ball *const b, const wall *const w)
