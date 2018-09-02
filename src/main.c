@@ -13,6 +13,8 @@
 #define WINDOW_WIDTH 480
 #define WINDOW_HEIGHT 640
 
+vector2f gravity_accel = {0, -700};
+
 static SDL_Window *game_window = NULL;
 static SDL_Renderer *renderer = NULL;
 static bool must_quit = false;

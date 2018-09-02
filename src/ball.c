@@ -20,8 +20,8 @@ void iterate_ball(ball *const b, const float dt_ms)
     */
 
     float dt = dt_ms * 1e-3f;
-    float a_x = b->applied_force.x / b->mass;
-    float a_y = b->applied_force.y / b->mass - g;
+    float a_x = b->applied_force.x / b->mass + gravity_accel.x;
+    float a_y = b->applied_force.y / b->mass + gravity_accel.y;
 
     b->position.x += b->speed.x * dt + a_x * dt * dt * 0.5f;
     b->position.y += b->speed.y * dt + a_y * dt * dt * 0.5f;

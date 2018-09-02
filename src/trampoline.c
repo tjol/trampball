@@ -111,8 +111,8 @@ static inline void trampoline_advance(const vector2f *const speed_in,
         float this_accel_x = k_over_m * (dx2 - dx1);
         float this_accel_y = k_over_m * (dy2 - dy1);
 
-        accel_out[i].x = this_accel_x - speed_in[i].x * damping;
-        accel_out[i].y = this_accel_y - speed_in[i].y * damping - g;
+        accel_out[i].x = this_accel_x - speed_in[i].x * damping + gravity_accel.x;
+        accel_out[i].y = this_accel_y - speed_in[i].y * damping + gravity_accel.y;
     }
 
     accel_out[0] = (vector2f) {0, 0};
@@ -259,8 +259,10 @@ void iterate_trampoline(trampoline *const t, const float dt_ms)
                 }
             }
 
-            vector2f gravity_slip = {- dt * g * a->direction_n.x * a->direction_n.y,
-                                     + dt * g * a->direction_n.x * a->direction_n.x};
+            float gravity_norm = gravity_accel.x * a->direction_n.y -
+                                 gravity_accel.y * a->direction_n.x;
+            vector2f gravity_slip = {- dt * gravity_norm * a->direction_n.y,
+                                     + dt * gravity_norm * a->direction_n.x};
 
             a->b->speed.x += gravity_slip.x;
             a->b->speed.y += gravity_slip.y;

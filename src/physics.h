@@ -12,8 +12,6 @@
  * unit for k: sec^-2
  */
 
-#define g 700
-
 typedef struct _vector2f {
     float x, y;
 } vector2f;
@@ -21,5 +19,7 @@ typedef struct _vector2f {
 typedef struct _vector2i {
     int x, y;
 } vector2i;
+
+extern vector2f gravity_accel;
 
 #endif
