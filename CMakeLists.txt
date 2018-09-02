@@ -7,7 +7,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 if (MSVC)
 	# using Visual Studio C++
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wa")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_RELEASE} /O2 /fp:fast")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_RELEASE} /O2")
 	set(MATHS_LIBRARY "")
 else()
 	# Probably GCC-like...
@@ -16,7 +16,7 @@ else()
 	# Use some UNIX features.
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_XOPEN_SOURCE=700")
 	
-	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -ffast-math")
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
 	set(MATHS_LIBRARY "m")
 endif()

@@ -94,7 +94,7 @@ bool collide_ball_trampoline(ball *const b, trampoline *const t)
 
     if (a == NULL) {
         // this is a collision we didn't know about!
-        a = new_attachment(t, 100); // TODO: calculate how much we NEED to allocate
+        a = new_attachment(t, n_anchors); // over-allocating, but that's OK
         a->b = b;
     }
 
@@ -127,3 +127,134 @@ bool collide_ball_trampoline(ball *const b, trampoline *const t)
 
     return true;
 }
+
+bool collide_ball_edges(ball *const b, const stage *const s)
+{
+    float overlap;
+
+    vector2f reflection = {1, 1};
+    if (((overlap = b->position.x - b->radius - s->left) <= 0) ||
+        ((overlap = b->position.x + b->radius - s->right) >= 0)) {
+            reflection.x = -b->bounce;
+            b->position.x -= overlap;
+    }
+    if (((overlap = b->position.y - b->radius - s->bottom) <= 0) ||
+        ((overlap = b->position.y + b->radius - s->top) >= 0)) {
+            reflection.y = -b->bounce;
+            b->position.y -= overlap;
+    }
+
+    if (reflection.x != 1 || reflection.y != 1) {
+        b->speed.x *= reflection.x;
+        b->speed.y *= reflection.y;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool collide_ball_ball(ball *const b1, ball *const b2)
+{
+    float min_dist = b1->radius + b2->radius;
+    float min_dist_sq = min_dist * min_dist;
+
+    vector2f sep = { b2->position.x - b1->position.x,
+                     b2->position.y - b1->position.y };
+    float dist_sq = sep.x*sep.x + sep.y*sep.y;
+
+    if (dist_sq > min_dist_sq) {
+        return false;
+    } else {
+        float dist = sqrtf(dist_sq);
+        vector2f sep_n = { sep.x/dist, sep.y/dist };
+        vector2f momentum_transfer = {
+            (b1->speed.x * b1->mass * fabsf(sep_n.x) - 
+             b2->speed.x * b2->mass * fabsf(sep_n.x)),
+            (b1->speed.y * b1->mass * fabsf(sep_n.y) - 
+             b2->speed.y * b2->mass * fabsf(sep_n.y)),
+        };
+
+        // TODO: integrate ball.bounce factor somehow...
+        b1->speed.x -= momentum_transfer.x / b1->mass;
+        b1->speed.y -= momentum_transfer.y / b1->mass;
+        b2->speed.x += momentum_transfer.x / b2->mass;
+        b2->speed.y += momentum_transfer.y / b2->mass;
+
+        float rel_r = b1->radius / min_dist;
+        b1->position.x -= (min_dist - dist) * rel_r * sep_n.x;
+        b1->position.y -= (min_dist - dist) * rel_r * sep_n.y;
+        b2->position.x += (min_dist - dist) * (1 - rel_r) * sep_n.x;
+        b2->position.y += (min_dist - dist) * (1 - rel_r) * sep_n.y;
+        return true;
+    }
+}
+
+static int collide_ball_line(ball *const b, vector2i pos, vector2i extent)
+{
+    vector2f offset, line_vec_hat;
+    float length, offset_sq, dist;
+
+    vector2i end_pos = { pos.x + extent.x, pos.y + extent.y };
+    float r_sq = b->radius*b->radius;
+
+    /* check whether the perpendicular from the centre onto our line
+       falls within our segment */
+    offset = (vector2f) { b->position.x - pos.x, b->position.y - pos.y };
+    if ((extent.x * offset.x + extent.y * offset.y) < 0) {
+        goto check_corner;
+    } else {
+        offset = (vector2f) { b->position.x - end_pos.x, b->position.y - end_pos.y };
+        if ((extent.x * offset.x + extent.y * offset.y) > 0) {
+            goto check_corner;
+        }
+    }
+    // above the line segment? ok
+    goto check_perpendicular;
+
+check_corner:
+    offset_sq = offset.x*offset.x + offset.y*offset.y;
+    if (offset_sq <= r_sq) {
+        length = sqrtf(extent.x*extent.x + extent.y*extent.y);
+        dist = sqrtf(offset_sq);
+        goto collision_detected;
+    } else {
+        return 0;
+    }
+
+check_perpendicular:
+    /* a .CROSS. b = |a| |b| sin \theta
+
+       if we got here, then ``offset'' is the offset from the END point.
+    */
+    length = sqrtf(extent.x*extent.x + extent.y*extent.y);
+    dist = fabsf((offset.x * extent.y - offset.y * extent.x) / length);
+    if (dist <= b->radius)
+        goto collision_detected;
+    else
+        return 0;
+    
+collision_detected:
+    /* reflect off of the line */
+    line_vec_hat = (vector2f) { extent.x / length, extent.y / length };
+    float speed_along = b->speed.x * line_vec_hat.x + b->speed.y * line_vec_hat.y;
+    vector2f velocity_along = { speed_along * line_vec_hat.x, speed_along * line_vec_hat.y };
+    b->speed.x = -b->bounce * (b->speed.x - velocity_along.x) + velocity_along.x;
+    b->speed.y = -b->bounce * (b->speed.y - velocity_along.y) + velocity_along.y;
+
+    b->position.x -= line_vec_hat.y * (b->radius - dist);
+    b->position.y += line_vec_hat.x * (b->radius - dist);
+    return 1;
+}
+
+bool collide_ball_wall(ball *const b, const wall *const w)
+{
+    return (
+        collide_ball_line(b, w->position, w->side1) +
+        collide_ball_line(b, w->position, w->side2) +
+        collide_ball_line(b, (vector2i){w->position.x + w->side1.x,
+                                        w->position.y + w->side1.y}, w->side2) +
+        collide_ball_line(b, (vector2i){w->position.x + w->side2.x,
+                                        w->position.y + w->side2.y}, w->side1)
+        ) ? true : false;
+}
+

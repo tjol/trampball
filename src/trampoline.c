@@ -119,7 +119,9 @@ static inline void trampoline_advance(const vector2f *const speed_in,
     accel_out[n_anchors-1] = (vector2f) {0, 0};
 
     if (dt == 0) {
-        memcpy(speed_out, speed_in, n_anchors*sizeof(vector2f));  
+        memcpy(speed_out, speed_in, n_anchors*sizeof(vector2f));
+        speed_out[0] = (vector2f) {0, 0};
+        speed_out[n_anchors-1] = (vector2f) {0, 0};
         return;
     } 
     
@@ -127,6 +129,9 @@ static inline void trampoline_advance(const vector2f *const speed_in,
         speed_out[i].x = speed_in[i].x + accel_out[i].x * dt;
         speed_out[i].y = speed_in[i].y + accel_out[i].y * dt;
     }
+
+    speed_out[0] = (vector2f) {0, 0};
+    speed_out[n_anchors-1] = (vector2f) {0, 0};
 }
 
 void iterate_trampoline(trampoline *const t, const float dt_ms)

@@ -12,6 +12,7 @@
 
 #define BALL_MASS 100.0f
 #define BALL_RADIUS 50.0f
+#define BALL_BOUNCE 0.2f
 
 typedef struct _ball {
     vector2f position;
@@ -20,6 +21,7 @@ typedef struct _ball {
     bool remote_controlled;
     vector2f speed;
     vector2f applied_force;
+    float bounce;
     // float spin;
 } ball;
 

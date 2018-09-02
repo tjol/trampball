@@ -18,4 +18,8 @@ typedef struct _vector2f {
     float x, y;
 } vector2f;
 
+typedef struct _vector2i {
+    int x, y;
+} vector2i;
+
 #endif

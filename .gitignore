@@ -1,8 +1,26 @@
+# (possible build outputs)
 /game
 *.o
-CMakeCache.txt
-CMakeFiles
+*.obj
+*.dll
+*.so
+*.a
+*.lib
+
+# Building in a subdirectory? Great!
+/*build*
+
+# CMake output
+/CMakeCache.txt
+/CMakeFiles
+/cmake_install.cmake
 Makefile
-cmake_install.cmake
-CMakeSettings.json
+*.ninja
+.ninja*
+
+# IDE-specific things
 /.vs
+/CMakeSettings.json
+/.project
+/.cproject
+*.sublime-*

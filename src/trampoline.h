@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define TRAMPOLINE_SPRING_CONSTANT 120000
+#define TRAMPOLINE_SPRING_CONSTANT 80000
 #define TRAMPOLINE_DAMPING 2.0f
 #define TRAMPOLINE_DENSITY 0.1f /* per pixel */
 
