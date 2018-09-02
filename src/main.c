@@ -238,10 +238,14 @@ int main(int argc, char **argv)
 
     trampoline *my_trampoline = new_trampoline(49);
     my_trampoline->x = 0;
-    my_trampoline->y = 100;
+    my_trampoline->y = 150;
     my_trampoline->width = WINDOW_WIDTH;
 
     add_trampoline(my_trampoline);
+
+    // for (int i=0; i<my_trampoline->n_anchors; ++i) {
+    //     my_trampoline->offsets[i].y = - i;
+    // }
 
     // my_trampoline2 = new_trampoline(49);
     // my_trampoline2->x = 0;

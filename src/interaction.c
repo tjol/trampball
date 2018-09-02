@@ -28,7 +28,8 @@ bool collide_ball_trampoline(ball *const b, trampoline *const t)
 
     int n_colliding = 0;
     int *colliding_indices = alloca(n_anchors * sizeof(int));
-    vector2f *delta_hats = alloca(n_anchors * sizeof(vector2f));
+    vector2f direction;
+    float min_dr_sq = 2 * r_sq;
 
     float combined_mass;
     vector2f combined_momentum = {0, 0};
@@ -52,9 +53,16 @@ bool collide_ball_trampoline(ball *const b, trampoline *const t)
             combined_momentum.x += t->speed[i].x;
             combined_momentum.y += t->speed[i].y;
 
-            float delta_r = sqrtf(delta_r_sq);
-            delta_hats[n_colliding].x = delta_x / delta_r;
-            delta_hats[n_colliding].y = delta_y / delta_r;
+            if (min_dr_sq > delta_r_sq) {
+                min_dr_sq = delta_r_sq;
+                float this_dr = sqrtf(delta_r_sq);
+                int i_before = i ? i-1 : 0;
+                int i_after = (i != n_anchors-1) ? i+1 : i;
+                float norm_x = (t->offsets[i_after].y - t->offsets[i_before].y);
+                float norm_y = - (2 * dx + t->offsets[i_after].x - t->offsets[i_before].x);
+                direction.x = this_dr * norm_x;
+                direction.y = this_dr * norm_y;
+            }
 
             n_colliding++;
 
@@ -90,8 +98,6 @@ bool collide_ball_trampoline(ball *const b, trampoline *const t)
         a->b = b;
     }
 
-    a->direction_n = (vector2f) {0, 0};
-
     for (i=0, j=0; i<n_colliding; ++i) {
         k = colliding_indices[i];
         for (;j < a->n_contacts; ++j)
@@ -99,16 +105,17 @@ bool collide_ball_trampoline(ball *const b, trampoline *const t)
                 break;
 
         /* only set the speed if this contact point is new */
-        if (j == a->n_contacts) {
+        if (j == a->n_contacts && k != 0 && k != (n_anchors-1)) {
             t->speed[k].x = speed_x;
             t->speed[k].y = speed_y;
             any_new = true;
             j = 0;
         }
-
-        a->direction_n.x -= delta_hats[i].x / n_colliding;
-        a->direction_n.y -= delta_hats[i].y / n_colliding;
     }
+    float dir_magn = sqrtf(direction.x*direction.x + 
+                           direction.y*direction.y);
+    a->direction_n.x = direction.x / dir_magn;
+    a->direction_n.y = direction.y / dir_magn;
 
     if (any_new) {
         b->speed.x = speed_x;

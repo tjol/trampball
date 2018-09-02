@@ -237,22 +237,37 @@ void iterate_trampoline(trampoline *const t, const float dt_ms)
         for (a = t->attached_objects; a != NULL; a = a->next) {
             vector2f dx = {0, 0};
             vector2f new_speed = {0, 0};
+            float new_speed_sq = 0;
             for (j=0; j<a->n_contacts; ++j) {
                 i = a->contact_points[j];
 
                 float my_dx = (t->offsets[i].x - x_tmp[i].x) * fabsf(a->direction_n.x);
                 float my_dy = (t->offsets[i].y - x_tmp[i].y) * fabsf(a->direction_n.y);
-                float my_vx = t->speed[i].x;
-                float my_vy = t->speed[i].y;
-                if (fabsf(my_dx) > fabsf(dx.x)) dx.x = my_dx;
-                if (fabsf(my_dy) > fabsf(dx.y)) dx.y = my_dy;
-                if (fabsf(my_vx) > fabsf(new_speed.x)) new_speed.x = my_vx;
-                if (fabsf(my_vy) > fabsf(new_speed.y)) new_speed.y = my_vy;
+                float my_vx = t->speed[i].x * fabsf(a->direction_n.x);
+                float my_vy = t->speed[i].y * fabsf(a->direction_n.y);
+
+                float my_speed_sq = my_vx*my_vx + my_vy*my_vy;
+                if (my_speed_sq > new_speed_sq) {
+                    dx = (vector2f) {my_dx, my_dy};
+                    new_speed = (vector2f) {my_vx, my_vy};
+                    new_speed_sq = my_speed_sq;
+                }
             }
 
-            if (a->direction_n.x != 0) dx.x /= fabsf(a->direction_n.x);
-            if (a->direction_n.y != 0) dx.y /= fabsf(a->direction_n.y);
-         
+            vector2f gravity_slip = {- dt * g * a->direction_n.x * a->direction_n.y,
+                                     + dt * g * a->direction_n.x * a->direction_n.x};
+
+            a->b->speed.x += gravity_slip.x;
+            a->b->speed.y += gravity_slip.y;
+
+            float orthogal_speed = (a->b->speed.y * a->direction_n.x) - 
+                                   (a->b->speed.x * a->direction_n.y);
+            vector2f orthogal_velocity = {orthogal_speed * a->direction_n.y,
+                                        - orthogal_speed * a->direction_n.x};
+
+            new_speed.x += orthogal_velocity.x;
+            new_speed.y += orthogal_velocity.y;
+
             vector2f speed_change = {new_speed.x - a->b->speed.x,
                                      new_speed.y - a->b->speed.y};
             
@@ -273,7 +288,9 @@ void iterate_trampoline(trampoline *const t, const float dt_ms)
                     dx.y = new_speed.y * dt;
                 }
             }
-            //*/
+
+            dx.x += orthogal_velocity.x * dt;
+            dx.y += orthogal_velocity.y * dt;
 
             force_advance_ball(a->b, new_speed, dx);
         }
