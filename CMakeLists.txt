@@ -42,7 +42,25 @@ if(WIN32)
 endif()
 
 add_executable(game ${src_dir}/main.c
+                    ${src_dir}/game.c
                     ${src_dir}/ball.c
                     ${src_dir}/trampoline.c
                     ${src_dir}/interaction.c)
 target_link_libraries(game ${SDL2_LIBRARY} ${MATHS_LIBRARY})
+
+# Copy resource files to build directory
+if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+	set(res_target_files "")
+	file(GLOB res_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/res/*")
+	foreach(res_file IN LISTS res_files)
+	    add_custom_command(
+	        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${res_file}"
+	        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/${res_file}" "${CMAKE_CURRENT_BINARY_DIR}/${res_file}"
+	        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${res_file}"
+	    )
+	    set(res_target_files ${res_target_files} "${CMAKE_CURRENT_BINARY_DIR}/${res_file}")
+	endforeach()
+
+	add_custom_target(res-target ALL DEPENDS ${res_target_files})
+endif()
+
