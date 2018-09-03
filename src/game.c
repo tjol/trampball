@@ -7,6 +7,7 @@
 #ifdef _MSC_VER
 #  include <io.h>
 #  define strncasecmp(s1, s2, n) _strnicmp(s1, s2, n)
+typedef long ssize_t;
 #else
 #  include <unistd.h>
 #  include <strings.h>
