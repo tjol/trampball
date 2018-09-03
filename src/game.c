@@ -115,7 +115,7 @@ bool init_game(const char *const world_file_name)
     return status;
 }
 
-#define max_line_len 1000
+#define max_line_len 200
 
 struct parser_state {
     trampoline *t;
@@ -128,6 +128,7 @@ static bool handle_worldfile_line(const char *lineptr, size_t len,
 bool init_game_fd(int fd)
 {
     ssize_t new_bytes;
+    size_t len_buffered;
     char linebuffer[max_line_len+1];
     char *lineptr = linebuffer;
     char *data_endptr = linebuffer;
@@ -155,6 +156,10 @@ bool init_game_fd(int fd)
                 return false;
             lineptr = newline_ptr+1;
         }
+
+        len_buffered = data_endptr - lineptr;
+        lineptr = memmove(linebuffer, lineptr, len_buffered);
+        data_endptr = linebuffer + len_buffered;
     }
     return true;
 }
