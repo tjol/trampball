@@ -205,7 +205,7 @@ static bool handle_worldfile_line(const char *lineptr, size_t len,
         len--;
     }
 
-    if (len == 0) return true;
+    if (len == 0 || *lineptr == '#' || *lineptr == ';') return true;
 
     // tokenize on spaces
     if ((sep = memchr(lineptr, ' ', len)) == NULL)
@@ -346,6 +346,8 @@ static bool handle_worldfile_line(const char *lineptr, size_t len,
         add_wall(w);
         state->b = NULL;
         state->t = NULL;
+    } else {
+        return false;
     }
 
     return true;
