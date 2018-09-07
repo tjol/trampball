@@ -7,7 +7,6 @@
 #ifdef _MSC_VER
 #  include <io.h>
 #  define strncasecmp(s1, s2, n) _strnicmp(s1, s2, n)
-typedef long ssize_t;
 #else
 #  include <unistd.h>
 #  include <strings.h>
@@ -128,7 +127,7 @@ static bool handle_worldfile_line(const char *lineptr, size_t len,
 
 bool init_game_fd(int fd)
 {
-    ssize_t new_bytes;
+    int new_bytes;
     size_t len_buffered;
     char linebuffer[max_line_len+1];
     char *lineptr = linebuffer;

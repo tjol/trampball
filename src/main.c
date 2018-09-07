@@ -6,13 +6,16 @@
 #include <sys/timeb.h>
 
 #include "game.h"
+#include "font.h"
 
 #define WINDOW_WIDTH 480
 #define WINDOW_HEIGHT 640
+#define FPS 60
 
 static SDL_Window *game_window = NULL;
 static SDL_Renderer *renderer = NULL;
 static bool must_quit = false;
+static trampballfont_sdl font_perfect16;
 
 static SDL_Point viewport_offset;
 
@@ -142,6 +145,10 @@ void draw_edges(const stage *const s)
 
 void main_loop_iter(const Uint32 delay_ms, const bool calc)
 {
+    static double fps = 0;
+    static char hudline[255];
+    static Uint32 last_hud = 2000;
+
     struct trampoline_list *tl;
     struct ball_list *bl;
     struct wall_list *wl;
@@ -176,9 +183,14 @@ void main_loop_iter(const Uint32 delay_ms, const bool calc)
 
         clock_t t1_calc = clock();
         double ms_in_calc = (1000.0 * (t1_calc-t0_calc)) / CLOCKS_PER_SEC;
-        printf("calculation in %g us.                ",
-               1000*ms_in_calc);
-        fflush(stdout);
+        if (last_hud >= 40) {
+            snprintf(hudline, 255, "%.1f fps - calc in %.2f ms", fps, ms_in_calc);
+            last_hud = 0;
+        } else {
+            last_hud += delay_ms;
+        }
+
+        render_string(&font_perfect16, renderer, hudline, (SDL_Point) {40, 10}, 1);
     }
 
     SDL_RenderPresent(renderer);
@@ -193,7 +205,7 @@ void main_loop_iter(const Uint32 delay_ms, const bool calc)
     ftime(&tb1);
     long dt_ms = 1000 * (tb1.time - tb0.time) + (tb1.millitm - tb0.millitm);
 
-    printf("\r%.1f fps - ", 1e3 / dt_ms);
+    fps = 1e3 / dt_ms;
 }
 
 int main()
@@ -219,6 +231,13 @@ int main()
         return 1;
     }
 
+    if (!init_trampballfont(renderer, "res/font/perfect_dos_vga/perfect16.tbf",
+                            0x11aa11ff, 0x00000000, &font_perfect16)) {
+        fprintf(stderr, "Error loading font\n");
+        cleanup();
+        return 1;
+    }
+
     viewport_offset = (SDL_Point) { 0, 0 };
 
     if (!init_game("res/worldfile.txt")) {
@@ -226,11 +245,11 @@ int main()
         return 1;
     }
 
-    for (int i=0; i<60 && !must_quit; ++i)
-        main_loop_iter(1000/60., false);
+    for (int i=0; i<FPS && !must_quit; ++i)
+        main_loop_iter(1e3/FPS, false);
 
     while (!must_quit)
-        main_loop_iter(1000/60., true);
+        main_loop_iter(1e3/FPS, true);
 
     cleanup();
     return 0;

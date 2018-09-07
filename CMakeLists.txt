@@ -14,7 +14,7 @@ else()
 	# Use standard and proper C99
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -pedantic -Wall -Wextra ")
 	# Use some UNIX features.
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_XOPEN_SOURCE=700")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_XOPEN_SOURCE=500")
 	
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
@@ -42,6 +42,7 @@ if(WIN32)
 endif()
 
 add_executable(game ${src_dir}/main.c
+                    ${src_dir}/font.c
                     ${src_dir}/game.c
                     ${src_dir}/ball.c
                     ${src_dir}/trampoline.c
@@ -51,7 +52,7 @@ target_link_libraries(game ${SDL2_LIBRARY} ${MATHS_LIBRARY})
 # Copy resource files to build directory
 if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 	set(res_target_files "")
-	file(GLOB res_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/res/*")
+	file(GLOB_RECURSE res_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/res/*")
 	foreach(res_file IN LISTS res_files)
 	    add_custom_command(
 	        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${res_file}"
