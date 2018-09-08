@@ -5,6 +5,11 @@
 #include <SDL.h>
 #include <sys/timeb.h>
 
+#ifdef _WIN32
+#  include <Windows.h>
+static INT64 qpc_freq;
+#endif
+
 #include "game.h"
 #include "font.h"
 
@@ -177,12 +182,23 @@ void main_loop_iter(const Uint32 delay_ms, const bool calc)
     }
 
     if (calc) {
+#ifdef _WIN32
+		INT64 t0_calc;
+		QueryPerformanceCounter((LARGE_INTEGER*)(&t0_calc));
+#else
         clock_t t0_calc = clock();
+#endif
 
         game_iteration(delay_ms);
 
+#ifdef _WIN32
+		INT64 t1_calc;
+		QueryPerformanceCounter((LARGE_INTEGER*)(&t1_calc));
+		double ms_in_calc = (1000.0 * (t1_calc - t0_calc)) / qpc_freq;
+#else
         clock_t t1_calc = clock();
-        double ms_in_calc = (1000.0 * (t1_calc-t0_calc)) / CLOCKS_PER_SEC;
+        double ms_in_calc = (1000.0 * (t1_calc - t0_calc)) / CLOCKS_PER_SEC;
+#endif
         if (last_hud >= 40) {
             snprintf(hudline, 255, "%.1f fps - calc in %.2f ms", fps, ms_in_calc);
             last_hud = 0;
@@ -244,6 +260,10 @@ int main()
         cleanup();
         return 1;
     }
+
+#ifdef _WIN32
+	QueryPerformanceFrequency((LARGE_INTEGER*)(&qpc_freq));
+#endif
 
     for (int i=0; i<FPS && !must_quit; ++i)
         main_loop_iter(1e3/FPS, false);
