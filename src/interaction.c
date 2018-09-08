@@ -220,8 +220,8 @@ check_corner:
         dist = sqrtf(offset_sq);
         /* repel any movement towards the corner */
         offset_hat = (vector2f) { offset.x/dist, offset.y/dist };
-        float speed_towards = b->speed.x * fabsf(offset_hat.x) +
-                              b->speed.y * fabsf(offset_hat.y);
+        float speed_towards = b->speed.x * offset_hat.x +
+                              b->speed.y * offset_hat.y;
         b->speed.x = b->speed.x - speed_towards * offset_hat.x;
         b->speed.y = b->speed.y - speed_towards * offset_hat.y;
 
@@ -236,8 +236,9 @@ check_perpendicular:
        if we got here, then ``offset'' is the offset from the END point.
     */
     length = sqrtf(extent.x*extent.x + extent.y*extent.y);
-    dist = fabsf((offset.x * extent.y - offset.y * extent.x) / length);
-    if (dist > b->radius) {
+    // dist is positive if the ball is on the right hand side
+    dist = (offset.x * extent.y - offset.y * extent.x) / length;
+    if (fabsf(dist) > b->radius) {
         return 0;
     } else {
         /* reflect off of the line */
@@ -247,8 +248,14 @@ check_perpendicular:
         b->speed.x = -b->bounce * (b->speed.x - velocity_along.x) + velocity_along.x;
         b->speed.y = -b->bounce * (b->speed.y - velocity_along.y) + velocity_along.y;
 
-        b->position.x -= line_vec_hat.y * (b->radius - dist);
-        b->position.y += line_vec_hat.x * (b->radius - dist);
+        // (+line_vec_hat.y, -line_vec_hat.x) points to the right.
+        if (dist > 0) {
+            b->position.x += line_vec_hat.y * (b->radius - dist);
+            b->position.y -= line_vec_hat.x * (b->radius - dist);
+        } else {
+            b->position.x -= line_vec_hat.y * (b->radius + dist);
+            b->position.y += line_vec_hat.x * (b->radius + dist);
+        }
         return 1;
     }
 }
