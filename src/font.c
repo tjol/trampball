@@ -15,8 +15,8 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
                         Uint32 fg_rgba, Uint32 bg_rgba,
                         trampballfont_sdl *font)
 {
-    int i, fd, total_bytes, bytes;
-    char buf1[16], *buf2;
+    int i, fd, total_pixels, total_bytes, bytes, bitmode;
+    char buf1[16], *buf2, *buf3;
     struct {
         Uint32 fontsize, w, h, nchars;
     } pars;
@@ -33,9 +33,20 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
         return false;
     }
     /* check file format */
-    if (strcmp("TRAMPBALLFONT 1", buf1) != 0 || buf1[15] != 0) {
+    if (strncmp("TRAMPBALLFONT 1", buf1, 15) != 0) {
         close(fd);
         return false;
+    }
+    switch(buf1[15]) {
+        case 0:
+            bitmode = 0;
+            break;
+        case 'b':
+            bitmode = 1;
+            break;
+        default:
+            close(fd);
+            return false;
     }
     /* read parameters */
     if (read(fd, &pars, 16) != 16) {
@@ -47,7 +58,13 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
     font->chr_h = ntohl(pars.h);
     font->n_chars = ntohl(pars.nchars);
 
-    total_bytes = font->n_chars * font->chr_w * font->chr_h;
+    total_pixels = font->n_chars * font->chr_w * font->chr_h;
+    if (bitmode) {
+        total_bytes = total_pixels/8 + !!(total_pixels%8);
+    } else {
+        total_bytes = total_pixels;
+    }
+
     buf2 = malloc(total_bytes);
 
     bytes = 0;
@@ -61,15 +78,25 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
         bytes += just_read;
     } while (bytes < total_bytes);
 
+    if (bitmode) {
+        buf3 = malloc(total_pixels);
+        for (i=0; i<total_pixels; ++i) {
+            buf3[i] = ((buf2[i/8] >> (7 - i%8)) & 1) ? 0xff : 0x00;
+        }
+    } else {
+        buf3 = buf2;
+    }
+
     close(fd);
 
-    surface = SDL_CreateRGBSurfaceFrom(buf2, font->chr_w,
+    surface = SDL_CreateRGBSurfaceFrom(buf3, font->chr_w,
                                        font->n_chars * font->chr_h,
                                        8, font->chr_w,
                                        0, 0, 0, 0);
 
     if (surface == NULL) {
         free(buf2);
+        if (bitmode) free(buf3);
         return false;
     }
 
@@ -88,6 +115,7 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
     SDL_FreeSurface(surface);
     
     free(buf2);
+    if (bitmode) free(buf3);
 
     if (font->texture != NULL) {
         return true;

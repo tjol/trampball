@@ -60,10 +60,30 @@ def demo_xpm(fn, buf, chr_w, chr_h):
 
 
 def write_font_bin(fn, buf, size, w, h):
+    bitmap = np.all((buf == 0) | (buf == 255))
     with open(fn, 'wb') as fp:
-        fp.write(b'TRAMPBALLFONT 1\x00')
+        fp.write(b'TRAMPBALLFONT 1')
+        if bitmap:
+            fp.write(b'b')
+        else:
+            fp.write(b'\x00')
         fp.write(struct.pack('!LLLL', size, w, h, buf.size//(w*h)))
-        fp.write(buf.ravel('C'))
+        if bitmap:
+            octets = int(np.ceil(buf.size/8))
+            buf2 = np.zeros([octets, 8], dtype='u1')
+            buf2.flat[:buf.size] = buf.flat
+            for bits in buf2:
+                b = (((bits[0] & 1) << 7) |
+                     ((bits[1] & 1) << 6) |
+                     ((bits[2] & 1) << 5) |
+                     ((bits[3] & 1) << 4) |
+                     ((bits[4] & 1) << 3) |
+                     ((bits[5] & 1) << 2) |
+                     ((bits[6] & 1) << 1) |
+                     ((bits[7] & 1) << 0))
+                fp.write(bytes([b]))
+        else:
+            fp.write(buf.ravel('C'))
 
 
 if __name__ == '__main__':
