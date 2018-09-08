@@ -212,7 +212,8 @@ void main_loop_iter(const Uint32 delay_ms, const bool calc)
     fps = 1e3 / dt_ms;
 }
 
-int main()
+
+int init_display()
 {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         print_SDL_error("SDL_Init");
@@ -244,7 +245,22 @@ int main()
 
     viewport_offset = (SDL_Point) { 0, 0 };
 
-    if (!init_game("res/worldfile.txt")) {
+    return 0;
+}
+
+
+int main(int argc, char *argv[])
+{
+    char *world_fn = "res/worldfile.txt";
+    if (argc > 2) {
+        fprintf(stderr, "Invalid number of arguments\n");
+    } else if (argc == 2) {
+        world_fn = argv[1];
+    }
+
+    if (init_display() != 0) return 1;
+
+    if (!init_game(world_fn)) {
         cleanup();
         return 1;
     }
