@@ -8,7 +8,7 @@ if (MSVC)
 	# using Visual Studio C++
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wa")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_RELEASE} /O2")
-	set(MATHS_LIBRARY "")
+	set(EXTRA_LIB "wsock32" "ws2_32")
 else()
 	# Probably GCC-like...
 	# Use standard and proper C99
@@ -18,7 +18,7 @@ else()
 	
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
-	set(MATHS_LIBRARY "m")
+	set(EXTRA_LIB "m")
 endif()
 
 set(src_dir "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -47,7 +47,7 @@ add_executable(game ${src_dir}/main.c
                     ${src_dir}/ball.c
                     ${src_dir}/trampoline.c
                     ${src_dir}/interaction.c)
-target_link_libraries(game ${SDL2_LIBRARY} ${MATHS_LIBRARY})
+target_link_libraries(game ${SDL2_LIBRARY} ${EXTRA_LIB})
 
 # Copy resource files to build directory
 if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
