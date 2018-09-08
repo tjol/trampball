@@ -26,6 +26,8 @@ set(src_dir "${CMAKE_CURRENT_SOURCE_DIR}/src")
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIR})
 
+set(GUI_APP)
+
 if(WIN32)
 	foreach(sdl2_lib ${SDL2_LIBRARY})
 		string(REGEX REPLACE "lib$" "dll" SDL2_dll_path ${sdl2_lib})
@@ -39,9 +41,11 @@ if(WIN32)
 	if(NOT sdl2_dll_copied_flag)
 		message(WARNING "could not find SDL2.dll!")
 	endif()
+	set(GUI_APP "WIN32")
 endif()
 
-add_executable(game ${src_dir}/main.c
+add_executable(game ${GUI_APP}
+					${src_dir}/main.c
                     ${src_dir}/font.c
                     ${src_dir}/game.c
                     ${src_dir}/ball.c
@@ -62,6 +66,6 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 	    set(res_target_files ${res_target_files} "${CMAKE_CURRENT_BINARY_DIR}/${res_file}")
 	endforeach()
 
-	add_custom_target(res-target ALL DEPENDS ${res_target_files})
+	add_dependencies(game ${res_target_files})
 endif()
 
