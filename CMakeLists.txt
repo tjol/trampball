@@ -66,6 +66,7 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 	    set(res_target_files ${res_target_files} "${CMAKE_CURRENT_BINARY_DIR}/${res_file}")
 	endforeach()
 
-	add_dependencies(game ${res_target_files})
+	add_custom_target(resources ALL DEPENDS ${res_target_files})
+	add_dependencies(game resources)
 endif()
 
