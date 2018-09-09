@@ -113,7 +113,7 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
     font->texture = SDL_CreateTextureFromSurface(ren, surface);
 
     SDL_FreeSurface(surface);
-    
+
     free(buf2);
     if (bitmode) free(buf3);
 
@@ -126,8 +126,8 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
 
 
 void render_string(const trampballfont_sdl *const font, SDL_Renderer *const ren,
-                   const char *const str, const SDL_Point topleft,
-                   const float scale)
+                   const char *const str, SDL_Point location,
+                   const float scale, const int flags)
 {
     int out_chr_w = scale * font->chr_w;
     int out_chr_h = scale * font->chr_h;
@@ -139,10 +139,19 @@ void render_string(const trampballfont_sdl *const font, SDL_Renderer *const ren,
     src.x = 0;
     src.y = 0;
 
+    if (flags & TEXT_RENDER_FLAG_CENTERED_X) {
+        int total_w = strlen(str) * out_chr_w;
+        location.x -= total_w/2;
+    }
+
+    if (flags & TEXT_RENDER_FLAG_CENTERED_X) {
+        location.y -= out_chr_h/2;
+    }
+
     dst.w = out_chr_w;
     dst.h = out_chr_h;
-    dst.x = topleft.x;
-    dst.y = topleft.y;
+    dst.x = location.x;
+    dst.y = location.y;
 
     for (int i=0; str[i]; ++i) {
         int charidx = (str[i] - ' ');
