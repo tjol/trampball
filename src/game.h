@@ -34,7 +34,6 @@ struct ball_list *add_ball(ball *const b);
 struct wall_list *add_wall(wall *const w);
 
 bool init_game(const char *const world_file_name);
-bool init_game_fd(int fd);
 void game_iteration(const float dt_ms);
 
 #endif

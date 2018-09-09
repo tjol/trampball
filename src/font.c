@@ -9,7 +9,8 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
                         Uint32 fg_rgba, Uint32 bg_rgba,
                         trampballfont_sdl *font)
 {
-    int i, fd, total_pixels, total_bytes, bytes, bitmode;
+    SDL_RWops *fp;
+    int i, total_pixels, total_bytes, bytes, bitmode;
     char buf1[16], *buf2, *buf3;
     struct {
         Uint32 fontsize, w, h, nchars;
@@ -17,18 +18,19 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
     SDL_Surface *surface;
     SDL_Color colours[256];
 
-    if ((fd = open(filename, O_RDONLY)) < 0) {
+    if ((fp = SDL_RWFromFile(filename, "rb")) == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "[Opening font] %s\n", SDL_GetError());
         return false;
     }
 
     /* read header */
-    if (read(fd, buf1, 16) != 16) {
-        close(fd);
+    if (SDL_RWread(fp, buf1, 1, 16) != 16) {
+        SDL_RWclose(fp);
         return false;
     }
     /* check file format */
     if (strncmp("TRAMPBALLFONT 1", buf1, 15) != 0) {
-        close(fd);
+        SDL_RWclose(fp);
         return false;
     }
     switch(buf1[15]) {
@@ -39,12 +41,12 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
             bitmode = 1;
             break;
         default:
-            close(fd);
+            SDL_RWclose(fp);
             return false;
     }
     /* read parameters */
-    if (read(fd, &pars, 16) != 16) {
-        close(fd);
+    if (SDL_RWread(fp, &pars, 16, 1) != 1) {
+        SDL_RWclose(fp);
         return false;
     }
     font->fontsize = ntohl(pars.fontsize);
@@ -63,9 +65,9 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
 
     bytes = 0;
     do {
-        int just_read = read(fd, &buf2[bytes], total_bytes-bytes);
+        int just_read = SDL_RWread(fp, &buf2[bytes], 1, total_bytes-bytes);
         if (just_read <= 0) {
-            close(fd);
+            SDL_RWclose(fp);
             free(buf2);
             return false;
         }
@@ -81,7 +83,7 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
         buf3 = buf2;
     }
 
-    close(fd);
+    SDL_RWclose(fp);
 
     surface = SDL_CreateRGBSurfaceFrom(buf3, font->chr_w,
                                        font->n_chars * font->chr_h,

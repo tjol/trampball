@@ -96,16 +96,18 @@ void game_iteration(const float dt_ms)
     }
 }
 
+bool init_game_sdlrw(SDL_RWops *fp);
+
 bool init_game(const char *const world_file_name)
 {
-    int fd;
-    if ((fd = open(world_file_name, O_RDONLY)) == -1) {
-        perror("Error opening world file");
+    SDL_RWops *fp;
+    if ((fp = SDL_RWFromFile(world_file_name, "rb")) == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "[Opening world file] %s\n", SDL_GetError());
         return false;
     }
 
-    bool status = init_game_fd(fd);
-    close(fd);
+    bool status = init_game_sdlrw(fp);
+    SDL_RWclose(fp);
     return status;
 }
 
@@ -119,7 +121,7 @@ struct parser_state {
 static bool handle_worldfile_line(const char *lineptr, size_t len,
                                   struct parser_state *const state);
 
-bool init_game_fd(int fd)
+bool init_game_sdlrw(SDL_RWops *fp)
 {
     int new_bytes;
     size_t len_buffered;
@@ -132,7 +134,7 @@ bool init_game_fd(int fd)
     struct parser_state state = { NULL, NULL };
 
     while (!eof) {
-        new_bytes = read(fd, data_endptr, (buffer_end-data_endptr));
+        new_bytes = SDL_RWread(fp, data_endptr, 1, (buffer_end-data_endptr));
         if (new_bytes == -1) {
             perror("Error reading file");
             return false; // error

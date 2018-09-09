@@ -3,12 +3,10 @@
 
 #ifdef _MSC_VER
 #  include <malloc.h>
-#  include <io.h>
 #  include <string.h>
 #  define strncasecmp(s1, s2, n) _strnicmp(s1, s2, n)
 #else
 #  include <alloca.h>
-#  include <unistd.h>
 #  include <strings.h>
 #endif
 
