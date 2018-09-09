@@ -63,7 +63,7 @@ static void cleanup()
 
 static inline void print_SDL_error(const char *msg)
 {
-    fprintf(stderr, "error - %s - %s\n", msg, SDL_GetError());
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "%s - %s\n", msg, SDL_GetError());
 }
 
 void handle_events()
@@ -292,7 +292,7 @@ void main_loop_iter()
 
     ftime(&tb0);
 
-    if (!(game_mode & MODE_EXPLORE)) {
+    if (!(game_mode & MODE_EXPLORE) && game_world.balls != NULL) {
         // we need to define the origin FIRST
         center_ball(game_world.balls->b);
     }
@@ -401,14 +401,14 @@ int init_sdl()
 
     if (!init_trampballfont(renderer, "res/font/perfect_dos_vga/perfect16.tbf",
                             0x11aa11ff, 0x00000000, &font_perfect16_green)) {
-        fprintf(stderr, "Error loading font\n");
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Error loading font\n");
         cleanup();
         return 1;
     }
 
     if (!init_trampballfont(renderer, "res/font/perfect_dos_vga/perfect16.tbf",
                             0xbb1111ff, 0x00000000, &font_perfect16_red)) {
-        fprintf(stderr, "Error loading font\n");
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Error loading font\n");
         cleanup();
         return 1;
     }
@@ -564,6 +564,8 @@ int main(int argc, char *argv[])
     if (init_sdl() != 0) return 1;
 
     if (!init_game(world_fn)) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Error loading %s\n",
+                        world_fn);
         cleanup();
         return 1;
     }

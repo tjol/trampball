@@ -100,7 +100,7 @@ bool init_game(const char *const world_file_name)
 {
     int fd;
     if ((fd = open(world_file_name, O_RDONLY)) == -1) {
-        perror("Error opening world file: ");
+        perror("Error opening world file");
         return false;
     }
 
@@ -134,7 +134,7 @@ bool init_game_fd(int fd)
     while (!eof) {
         new_bytes = read(fd, data_endptr, (buffer_end-data_endptr));
         if (new_bytes == -1) {
-            perror("Error reading file: ");
+            perror("Error reading file");
             return false; // error
         } else if (new_bytes == 0) {
             eof = true;
