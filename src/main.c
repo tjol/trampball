@@ -12,6 +12,7 @@ static Uint64 perf_freq;
 
 #define WINDOW_WIDTH 480
 #define WINDOW_HEIGHT 640
+#define OVER_EDGE_MAX 1
 #define FPS 60
 
 static SDL_Window *game_window = NULL;
@@ -19,7 +20,7 @@ static SDL_Renderer *renderer = NULL;
 static bool must_quit = false;
 static trampballfont_sdl font_perfect16;
 
-static SDL_Point viewport_offset;
+static SDL_Point origin;
 
 static void cleanup()
 {
@@ -65,8 +66,8 @@ void handle_events()
 void draw_trampoline(const trampoline *const t)
 {
     SDL_Point *points = calloc(t->n_anchors, sizeof(SDL_Point));
-    float x = viewport_offset.x + t->x;
-    int y = WINDOW_HEIGHT + viewport_offset.y - t->y;
+    float x = origin.x + t->x;
+    int y = origin.y - t->y;
     float delta = ((float)t->width) / (t->n_anchors-1);
 
     for (int i = 0; i<t->n_anchors; ++i)
@@ -98,8 +99,8 @@ void draw_ball(const ball *const b)
 {
     float angle_step = M_PI * 2 / 60;
 
-    float x0 = viewport_offset.x + b->position.x;
-    float y0 = WINDOW_HEIGHT + viewport_offset.y - b->position.y;
+    float x0 = origin.x + b->position.x;
+    float y0 = origin.y - b->position.y;
     SDL_Point points[60];
 
     float angle;
@@ -116,8 +117,8 @@ void draw_ball(const ball *const b)
 void draw_wall(const wall *const w)
 {
     SDL_Point corners[5];
-    corners[0] = (SDL_Point) { viewport_offset.x + w->position.x,
-                               viewport_offset.y + WINDOW_HEIGHT - w->position.y };
+    corners[0] = (SDL_Point) { origin.x + w->position.x,
+                               origin.y - w->position.y };
     corners[1] = (SDL_Point) { corners[0].x + w->side1.x, corners[0].y - w->side1.y};
     corners[2] = (SDL_Point) { corners[1].x + w->side2.x, corners[1].y - w->side2.y};
     corners[3] = (SDL_Point) { corners[2].x - w->side1.x, corners[2].y + w->side1.y};
@@ -129,10 +130,10 @@ void draw_wall(const wall *const w)
 
 void draw_edges(const stage *const s)
 {
-    int top = viewport_offset.y + WINDOW_HEIGHT - s->top;
-    int left = viewport_offset.x + s->left;
-    int bottom = viewport_offset.y + WINDOW_HEIGHT - s->bottom;
-    int right = viewport_offset.x + s->right;
+    int top = origin.y - s->top;
+    int left = origin.x + s->left;
+    int bottom = origin.y - s->bottom;
+    int right = origin.x + s->right;
     SDL_Point corners[5] = {
         { left, top },
         { right, top },
@@ -143,6 +144,30 @@ void draw_edges(const stage *const s)
 
     SDL_SetRenderDrawColor(renderer, 255, 255, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderDrawLines(renderer, corners, 5);
+}
+
+void center_ball(const ball *const b)
+{
+    // origin is defined as the location in window coordinates
+    // of the (0,0) point in game coordinates.
+
+    origin.x = (WINDOW_WIDTH/2 - b->position.x);
+    origin.y = (b->position.y + WINDOW_HEIGHT/2);
+
+    int over_left   = origin.x + game_world.game_stage.left;
+    int over_top    = origin.y - game_world.game_stage.top;
+    int over_right  = WINDOW_WIDTH - origin.x - game_world.game_stage.right;
+    int over_bottom = WINDOW_HEIGHT - origin.y + game_world.game_stage.bottom;
+
+    if (over_left > OVER_EDGE_MAX)
+        origin.x -= (over_left - OVER_EDGE_MAX);
+    if (over_top > OVER_EDGE_MAX)
+        origin.y -= (over_top - OVER_EDGE_MAX);
+    if (over_right > OVER_EDGE_MAX)
+        origin.x += (over_right - OVER_EDGE_MAX);
+    if (over_bottom > OVER_EDGE_MAX)
+        origin.y += (over_bottom - OVER_EDGE_MAX);
+
 }
 
 void main_loop_iter(const Uint32 delay_ms, const bool calc)
@@ -158,6 +183,9 @@ void main_loop_iter(const Uint32 delay_ms, const bool calc)
 
     clock_t t0 = clock();
     ftime(&tb0);
+
+    // we need to define the origin FIRST
+    center_ball(game_world.balls->b);
 
     // Draw a black background
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -243,7 +271,7 @@ int init_display()
         return 1;
     }
 
-    viewport_offset = (SDL_Point) { 0, 0 };
+    origin = (SDL_Point) { 0, WINDOW_HEIGHT };
 
     return 0;
 }
