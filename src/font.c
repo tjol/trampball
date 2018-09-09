@@ -1,14 +1,8 @@
 #include <fcntl.h>
-#ifdef _MSC_VER
-#  include <io.h>
-#  include <WinSock2.h>
-#else
-#  include <unistd.h>
-#  include <arpa/inet.h>
-#endif
 #include <string.h>
 #include <stdlib.h>
 
+#include "compat.h"
 #include "font.h"
 
 bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,

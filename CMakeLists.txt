@@ -8,7 +8,7 @@ if (MSVC)
 	# using Visual Studio C++
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wa")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_RELEASE} /O2")
-	set(EXTRA_LIB "wsock32" "ws2_32")
+	set(EXTRA_LIB)
 else()
 	# Probably GCC-like...
 	# Use standard and proper C99

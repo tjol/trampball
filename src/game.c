@@ -4,13 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <fcntl.h>
-#ifdef _MSC_VER
-#  include <io.h>
-#  define strncasecmp(s1, s2, n) _strnicmp(s1, s2, n)
-#else
-#  include <unistd.h>
-#  include <strings.h>
-#endif
+#include "compat.h"
 
 #include "game.h"
 

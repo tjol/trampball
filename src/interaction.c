@@ -1,13 +1,8 @@
-#ifdef _MSC_VER
-#  include <malloc.h>
-#else
-#  include <alloca.h>
-#endif
-
 #include <math.h>
 #include <string.h>
 
 #include "interaction.h"
+#include "compat.h"
 
 
 bool collide_ball_trampoline(ball *const b, trampoline *const t)

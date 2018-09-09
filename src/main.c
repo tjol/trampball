@@ -121,10 +121,9 @@ void handle_mouse(struct mouse_control_state *mouse_state)
     }
 
     if (game_mode & MODE_RUNNING) {
-        int x, y;
-        SDL_GetRelativeMouseState(&x, &y);
-
         if (mouse_state->mouse_captured) {
+            int x, y;
+            SDL_GetRelativeMouseState(&x, &y);
 
             float v_x, v_y;
             float dt = ((float)(now - mouse_tick));
@@ -205,11 +204,11 @@ void draw_wall(const wall *const w)
     corners[0] = (SDL_Point) { origin.x + w->position.x * SCALING,
                                origin.y - w->position.y * SCALING };
     corners[1] = (SDL_Point) { corners[0].x + w->side1.x * SCALING,
-                               corners[0].y - w->side1.y * SCALING};
+                               corners[0].y - w->side1.y * SCALING };
     corners[2] = (SDL_Point) { corners[1].x + w->side2.x * SCALING,
-                               corners[1].y - w->side2.y * SCALING};
+                               corners[1].y - w->side2.y * SCALING };
     corners[3] = (SDL_Point) { corners[2].x - w->side1.x * SCALING,
-                               corners[2].y + w->side1.y * SCALING};
+                               corners[2].y + w->side1.y * SCALING };
     corners[4] = corners[0];
 
     SDL_SetRenderDrawColor(renderer, 0, 128, 255, SDL_ALPHA_OPAQUE);
