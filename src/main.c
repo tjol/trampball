@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <SDL.h>
 #include <sys/timeb.h>
@@ -10,10 +11,16 @@
 
 static Uint64 perf_freq;
 
-#define WINDOW_WIDTH 480
-#define WINDOW_HEIGHT 640
+#define DEFAULT_WINDOW_WIDTH 480
+#define DEFAULT_WINDOW_HEIGHT 640
+#define DEFAULT_SCALING 1.0
+#define DEFAULT_FPS 60
 #define OVER_EDGE_MAX 1
-#define FPS 60
+
+static int WINDOW_WIDTH = DEFAULT_WINDOW_WIDTH;
+static int WINDOW_HEIGHT = DEFAULT_WINDOW_HEIGHT;
+static double SCALING = DEFAULT_SCALING;
+static int FPS = DEFAULT_FPS;
 
 static SDL_Window *game_window = NULL;
 static SDL_Renderer *renderer = NULL;
@@ -66,14 +73,14 @@ void handle_events()
 void draw_trampoline(const trampoline *const t)
 {
     SDL_Point *points = calloc(t->n_anchors, sizeof(SDL_Point));
-    float x = origin.x + t->x;
-    int y = origin.y - t->y;
-    float delta = ((float)t->width) / (t->n_anchors-1);
+    float x = origin.x + t->x * SCALING;
+    int y = origin.y - t->y * SCALING;
+    float delta = ((float)t->width) / (t->n_anchors-1) * SCALING;
 
     for (int i = 0; i<t->n_anchors; ++i)
     {
-        points[i].x = (int) (x + t->offsets[i].x);
-        points[i].y = (int) (y - t->offsets[i].y);
+        points[i].x = (int) (x + t->offsets[i].x * SCALING);
+        points[i].y = (int) (y - t->offsets[i].y * SCALING);
         x += delta;
     }
 
@@ -99,15 +106,15 @@ void draw_ball(const ball *const b)
 {
     float angle_step = M_PI * 2 / 60;
 
-    float x0 = origin.x + b->position.x;
-    float y0 = origin.y - b->position.y;
+    float x0 = origin.x + b->position.x * SCALING;
+    float y0 = origin.y - b->position.y * SCALING;
     SDL_Point points[60];
 
     float angle;
     int i;
     for (i=0, angle=0; i<60; ++i, angle += angle_step) {
-        points[i].x = x0 + b->radius * cosf(angle);
-        points[i].y = y0 + b->radius * sinf(angle);
+        points[i].x = x0 + b->radius * cosf(angle) * SCALING;
+        points[i].y = y0 + b->radius * sinf(angle) * SCALING;
     }
 
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
@@ -117,11 +124,14 @@ void draw_ball(const ball *const b)
 void draw_wall(const wall *const w)
 {
     SDL_Point corners[5];
-    corners[0] = (SDL_Point) { origin.x + w->position.x,
-                               origin.y - w->position.y };
-    corners[1] = (SDL_Point) { corners[0].x + w->side1.x, corners[0].y - w->side1.y};
-    corners[2] = (SDL_Point) { corners[1].x + w->side2.x, corners[1].y - w->side2.y};
-    corners[3] = (SDL_Point) { corners[2].x - w->side1.x, corners[2].y + w->side1.y};
+    corners[0] = (SDL_Point) { origin.x + w->position.x * SCALING,
+                               origin.y - w->position.y * SCALING };
+    corners[1] = (SDL_Point) { corners[0].x + w->side1.x * SCALING,
+                               corners[0].y - w->side1.y * SCALING};
+    corners[2] = (SDL_Point) { corners[1].x + w->side2.x * SCALING,
+                               corners[1].y - w->side2.y * SCALING};
+    corners[3] = (SDL_Point) { corners[2].x - w->side1.x * SCALING,
+                               corners[2].y + w->side1.y * SCALING};
     corners[4] = corners[0];
 
     SDL_SetRenderDrawColor(renderer, 0, 128, 255, SDL_ALPHA_OPAQUE);
@@ -130,10 +140,10 @@ void draw_wall(const wall *const w)
 
 void draw_edges(const stage *const s)
 {
-    int top = origin.y - s->top;
-    int left = origin.x + s->left;
-    int bottom = origin.y - s->bottom;
-    int right = origin.x + s->right;
+    int top = origin.y - s->top * SCALING;
+    int left = origin.x + s->left * SCALING;
+    int bottom = origin.y - s->bottom * SCALING;
+    int right = origin.x + s->right * SCALING;
     SDL_Point corners[5] = {
         { left, top },
         { right, top },
@@ -151,13 +161,13 @@ void center_ball(const ball *const b)
     // origin is defined as the location in window coordinates
     // of the (0,0) point in game coordinates.
 
-    origin.x = (WINDOW_WIDTH/2 - b->position.x);
-    origin.y = (b->position.y + WINDOW_HEIGHT/2);
+    origin.x = (WINDOW_WIDTH/2 - b->position.x * SCALING);
+    origin.y = (b->position.y * SCALING + WINDOW_HEIGHT/2);
 
-    int over_left   = origin.x + game_world.game_stage.left;
-    int over_top    = origin.y - game_world.game_stage.top;
-    int over_right  = WINDOW_WIDTH - origin.x - game_world.game_stage.right;
-    int over_bottom = WINDOW_HEIGHT - origin.y + game_world.game_stage.bottom;
+    int over_left   = origin.x + game_world.game_stage.left * SCALING;
+    int over_top    = origin.y - game_world.game_stage.top * SCALING;
+    int over_right  = WINDOW_WIDTH - origin.x - game_world.game_stage.right * SCALING;
+    int over_bottom = WINDOW_HEIGHT - origin.y + game_world.game_stage.bottom * SCALING;
 
     if (over_left > OVER_EDGE_MAX)
         origin.x -= (over_left - OVER_EDGE_MAX);
@@ -175,6 +185,7 @@ void main_loop_iter(const Uint32 delay_ms, const bool calc)
     static double fps = 0;
     static char hudline[255];
     static Uint32 last_hud = 2000;
+    static double ms_in_calc = 0;
 
     struct trampoline_list *tl;
     struct ball_list *bl;
@@ -213,17 +224,17 @@ void main_loop_iter(const Uint32 delay_ms, const bool calc)
 
         Uint64 t1_calc = SDL_GetPerformanceCounter();
 
-		double ms_in_calc = (1000.0 * (t1_calc - t0_calc)) / perf_freq;
-
-        if (last_hud >= 40) {
-            snprintf(hudline, 255, "%.1f fps - calc in %.2f ms", fps, ms_in_calc);
-            last_hud = 0;
-        } else {
-            last_hud += delay_ms;
-        }
-
-        render_string(&font_perfect16, renderer, hudline, (SDL_Point) {40, 10}, 1);
+		ms_in_calc = (1000.0 * (t1_calc - t0_calc)) / perf_freq;
     }
+
+    if (last_hud >= 40) {
+        snprintf(hudline, 255, "%.1f fps - calc in %.2f ms", fps, ms_in_calc);
+        last_hud = 0;
+    } else {
+        last_hud += delay_ms;
+    }
+
+    render_string(&font_perfect16, renderer, hudline, (SDL_Point) {40, 10}, 1);
 
     SDL_RenderPresent(renderer);
 
@@ -276,14 +287,138 @@ int init_display()
     return 0;
 }
 
+int parse_args(int argc, char *argv[],
+               char *flags[],
+               char *opts_arg[],
+               int max_args,
+               bool out_flags[],
+               char *out_opt_values[],
+               char *out_args[])
+{
+    int i;
+
+    int n_args_so_far = 0;
+    int hungry_opt = -1;
+
+    for (int i=0; flags[i] != NULL; ++i) {
+        out_flags[i] = false;
+    }
+    
+    for (int i=0; opts_arg[i] != NULL; ++i) {
+        out_opt_values[i] = NULL;
+    }
+
+    while (argc-- > 1) {
+        ++argv;
+
+        if (argv[0][0] == '-' && hungry_opt == -1) {
+            // this is an option/a flag
+            int candidates = 0;
+            int cand_flag = -1;
+            int cand_opt = -1;
+            int len = strlen(argv[0]);
+
+            for (i=0; flags[i] != NULL; ++i) {
+                if (strncmp(flags[i], &argv[0][1], len-1) == 0) {
+                    cand_flag = i;
+                    ++candidates;
+                }
+            }
+
+            for (i=0; opts_arg[i] != NULL; ++i) {
+                if (strncmp(opts_arg[i], &argv[0][1], len-1) == 0) {
+                    cand_opt = i;
+                    ++candidates;
+                }
+            }
+
+            if (candidates == 0) {
+                fprintf(stderr, "Unrecognized option: %s\n", &argv[0][1]);
+                return -1;
+            } else if (candidates == 1) {
+                if (cand_flag >= 0) {
+                    out_flags[cand_flag] = true;
+                } else  {
+                    hungry_opt = cand_opt;
+                }
+            } else {
+                fprintf(stderr, "Ambigious option: %s\n", &argv[0][1]);
+                return -1;
+            }
+        } else if (hungry_opt >= 0) {
+            // option value
+            out_opt_values[hungry_opt] = argv[0];
+            hungry_opt = -1;
+        } else {
+            // regular argument
+            if (n_args_so_far >= max_args) {
+                fprintf(stderr, "Too many arguments!\n");
+                return -1;
+            }
+            out_args[n_args_so_far++] = argv[0];
+        }
+    }
+
+    return n_args_so_far;
+}
 
 int main(int argc, char *argv[])
 {
+    char *flags[] = { "help", NULL };
+    char *opts[] = { "width", "height", "scaling", "fps", "slomo", NULL };
+    bool show_help = false;
+    char *opt_vals[5];
     char *world_fn = "res/worldfile.txt";
-    if (argc > 2) {
-        fprintf(stderr, "Invalid number of arguments\n");
-    } else if (argc == 2) {
-        world_fn = argv[1];
+    int slomo = 1;
+
+    int n_args = parse_args(argc, argv, flags, opts, 1,
+                            &show_help, opt_vals, &world_fn);
+
+    if (n_args < 0 || show_help) {
+        fprintf(stderr, "trampball - balls bouncing on trampolines\n"
+                        "\n"
+                        "  Usage: %s [-width 480] [-height 640] [-scaling 1]\n"
+                        "            [-fps 60] [-slomo 1] [-help] res/worldfile.txt\n",
+                        argv[0]);
+        if (show_help) return 0;
+        else return 2;
+    }
+
+    char *endp;
+    if (opt_vals[0] != NULL) {
+        WINDOW_WIDTH = strtol(opt_vals[0], &endp, 10);
+        if (*opt_vals[0] == '\0' || *endp != '\0') {
+            fprintf(stderr, "not an integer: %s\n", opt_vals[0]);
+            return 2;
+        }
+    }
+    if (opt_vals[1] != NULL) {
+        WINDOW_HEIGHT = strtol(opt_vals[1], &endp, 10);
+        if (*opt_vals[1] == '\0' || *endp != '\0') {
+            fprintf(stderr, "not an integer: %s\n", opt_vals[1]);
+            return 2;
+        }
+    }
+    if (opt_vals[2] != NULL) {
+        SCALING = strtod(opt_vals[2], &endp);
+        if (*opt_vals[2] == '\0' || *endp != '\0') {
+            fprintf(stderr, "not a number: %s\n", opt_vals[2]);
+            return 2;
+        }
+    }
+    if (opt_vals[3] != NULL) {
+        FPS = strtol(opt_vals[3], &endp, 10);
+        if (*opt_vals[3] == '\0' || *endp != '\0') {
+            fprintf(stderr, "not an integer: %s\n", opt_vals[3]);
+            return 2;
+        }
+    }
+    if (opt_vals[4] != NULL) {
+        slomo = strtol(opt_vals[4], &endp, 10);
+        if (*opt_vals[4] == '\0' || *endp != '\0') {
+            fprintf(stderr, "not an integer: %s\n", opt_vals[4]);
+            return 2;
+        }
     }
 
     if (init_display() != 0) return 1;
@@ -298,8 +433,16 @@ int main(int argc, char *argv[])
     for (int i=0; i<FPS && !must_quit; ++i)
         main_loop_iter(1e3/FPS, false);
 
-    while (!must_quit)
-        main_loop_iter(1e3/FPS, true);
+    int slomo_count = 0;
+
+    while (!must_quit) {
+        if (++slomo_count == slomo) {
+            slomo_count = 0;
+            main_loop_iter(1e3/FPS, true);
+        } else {
+            main_loop_iter(1e3/FPS, false);
+        }
+    }
 
     cleanup();
     return 0;
