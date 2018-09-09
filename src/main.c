@@ -14,18 +14,25 @@ static Uint64 perf_freq;
 #define DEFAULT_WINDOW_WIDTH 480
 #define DEFAULT_WINDOW_HEIGHT 640
 #define DEFAULT_SCALING 1.0
-#define DEFAULT_FPS 60
 #define OVER_EDGE_MAX 1
 
 static int WINDOW_WIDTH = DEFAULT_WINDOW_WIDTH;
 static int WINDOW_HEIGHT = DEFAULT_WINDOW_HEIGHT;
 static double SCALING = DEFAULT_SCALING;
-static int FPS = DEFAULT_FPS;
 
 static SDL_Window *game_window = NULL;
 static SDL_Renderer *renderer = NULL;
 static bool must_quit = false;
 static trampballfont_sdl font_perfect16;
+
+#define MODE_RUNNING 0x01
+#define MODE_EXPLORE 0x02
+#define MODE_INTERACTIVE 0x04
+
+static uint8_t game_mode = 0;
+static uint16_t time_dilation = 1;
+
+static double calc_time_us = 0;
 
 static SDL_Point origin;
 
@@ -180,23 +187,23 @@ void center_ball(const ball *const b)
 
 }
 
-void main_loop_iter(const Uint32 delay_ms, const bool calc)
+void main_loop_iter()
 {
-    static double fps = 0;
+    static double fps = 10;
     static char hudline[255];
     static Uint32 last_hud = 2000;
-    static double ms_in_calc = 0;
 
     struct trampoline_list *tl;
     struct ball_list *bl;
     struct wall_list *wl;
     struct timeb tb0, tb1;
 
-    clock_t t0 = clock();
     ftime(&tb0);
 
-    // we need to define the origin FIRST
-    center_ball(game_world.balls->b);
+    if (!(game_mode & MODE_EXPLORE)) {
+        // we need to define the origin FIRST
+        center_ball(game_world.balls->b);
+    }
 
     // Draw a black background
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -217,21 +224,11 @@ void main_loop_iter(const Uint32 delay_ms, const bool calc)
         draw_wall(wl->w);
     }
 
-    if (calc) {
-        Uint64 t0_calc = SDL_GetPerformanceCounter();
-
-        game_iteration(delay_ms);
-
-        Uint64 t1_calc = SDL_GetPerformanceCounter();
-
-		ms_in_calc = (1000.0 * (t1_calc - t0_calc)) / perf_freq;
-    }
-
     if (last_hud >= 40) {
-        snprintf(hudline, 255, "%.1f fps - calc in %.2f ms", fps, ms_in_calc);
+        snprintf(hudline, 255, "%.1f fps; calc in %.1f us", fps, calc_time_us);
         last_hud = 0;
     } else {
-        last_hud += delay_ms;
+        last_hud += 1e3/fps;
     }
 
     render_string(&font_perfect16, renderer, hudline, (SDL_Point) {40, 10}, 1);
@@ -239,11 +236,6 @@ void main_loop_iter(const Uint32 delay_ms, const bool calc)
     SDL_RenderPresent(renderer);
 
     handle_events();
-    clock_t t1 = clock();
-    double ms_elapled = (1000.0 * (t1-t0)) / CLOCKS_PER_SEC;
-    double ms_to_wait = delay_ms - ms_elapled;
-
-    if (ms_to_wait > 0) SDL_Delay(ms_to_wait);
 
     ftime(&tb1);
     long dt_ms = 1000 * (tb1.time - tb0.time) + (tb1.millitm - tb0.millitm);
@@ -251,10 +243,31 @@ void main_loop_iter(const Uint32 delay_ms, const bool calc)
     fps = 1e3 / dt_ms;
 }
 
-
-int init_display()
+Uint32 game_timer_callback(Uint32 interval_ms, void *user_data)
 {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+    static int calc_counter = 0;
+
+    double *last_time_taken_us = (double*) user_data;
+
+    if ((game_mode & MODE_RUNNING) && ++calc_counter >= time_dilation) {
+        calc_counter = 0;
+
+        Uint64 t0_calc = SDL_GetPerformanceCounter();
+        game_iteration(interval_ms);
+        Uint64 t1_calc = SDL_GetPerformanceCounter();
+
+        if (last_time_taken_us != NULL) {
+            *last_time_taken_us = (1.0e6 * (t1_calc - t0_calc)) / perf_freq;
+        }
+    }
+
+    return interval_ms;
+}
+
+
+int init_sdl()
+{
+    if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER) != 0) {
         print_SDL_error("SDL_Init");
         return 1;
     }
@@ -365,11 +378,12 @@ int parse_args(int argc, char *argv[],
 int main(int argc, char *argv[])
 {
     char *flags[] = { "help", NULL };
-    char *opts[] = { "width", "height", "scaling", "fps", "slomo", NULL };
+    char *opts[] = { "width", "height", "scaling", "interval", "slomo", NULL };
     bool show_help = false;
     char *opt_vals[5];
     char *world_fn = "res/worldfile.txt";
-    int slomo = 1;
+    SDL_TimerID calc_timer;
+    uint32_t calc_interval = 10;
 
     int n_args = parse_args(argc, argv, flags, opts, 1,
                             &show_help, opt_vals, &world_fn);
@@ -378,7 +392,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "trampball - balls bouncing on trampolines\n"
                         "\n"
                         "  Usage: %s [-width 480] [-height 640] [-scaling 1]\n"
-                        "            [-fps 60] [-slomo 1] [-help] res/worldfile.txt\n",
+                        "            [-interval 10] [-slomo 1] [-help] res/worldfile.txt\n",
                         argv[0]);
         if (show_help) return 0;
         else return 2;
@@ -407,21 +421,21 @@ int main(int argc, char *argv[])
         }
     }
     if (opt_vals[3] != NULL) {
-        FPS = strtol(opt_vals[3], &endp, 10);
+        calc_interval = strtol(opt_vals[3], &endp, 10);
         if (*opt_vals[3] == '\0' || *endp != '\0') {
             fprintf(stderr, "not an integer: %s\n", opt_vals[3]);
             return 2;
         }
     }
     if (opt_vals[4] != NULL) {
-        slomo = strtol(opt_vals[4], &endp, 10);
+        time_dilation = strtol(opt_vals[4], &endp, 10);
         if (*opt_vals[4] == '\0' || *endp != '\0') {
             fprintf(stderr, "not an integer: %s\n", opt_vals[4]);
             return 2;
         }
     }
 
-    if (init_display() != 0) return 1;
+    if (init_sdl() != 0) return 1;
 
     if (!init_game(world_fn)) {
         cleanup();
@@ -430,18 +444,26 @@ int main(int argc, char *argv[])
 
     perf_freq = SDL_GetPerformanceFrequency();
 
-    for (int i=0; i<FPS && !must_quit; ++i)
-        main_loop_iter(1e3/FPS, false);
+    game_mode = 0;
+    calc_timer = SDL_AddTimer(calc_interval, game_timer_callback,
+                              (void*)(&calc_time_us));
 
-    int slomo_count = 0;
+    if (!calc_timer) {
+        print_SDL_error("SDL_AddTimer");
+        cleanup();
+        return 1;
+    }
+
+    // wait a second before starting the simulation
+    uint32_t start_ticks = SDL_GetTicks();
+    while (!must_quit && (SDL_GetTicks() - start_ticks) < 1000) {
+        main_loop_iter();
+    }
+
+    game_mode |= MODE_RUNNING;
 
     while (!must_quit) {
-        if (++slomo_count == slomo) {
-            slomo_count = 0;
-            main_loop_iter(1e3/FPS, true);
-        } else {
-            main_loop_iter(1e3/FPS, false);
-        }
+        main_loop_iter();
     }
 
     cleanup();
