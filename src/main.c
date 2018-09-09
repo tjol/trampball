@@ -268,14 +268,22 @@ void center_ball(const ball *const b)
     int over_right  = WINDOW_WIDTH - origin.x - game_world.game_stage.right * SCALING;
     int over_bottom = WINDOW_HEIGHT - origin.y + game_world.game_stage.bottom * SCALING;
 
-    if (over_left > OVER_EDGE_MAX)
+    // if the stage is too small for our screen, center!
+    if ((game_world.game_stage.right - game_world.game_stage.left) * SCALING < WINDOW_WIDTH) {
+        origin.x -= over_left - (over_left + over_right) / 2 - OVER_EDGE_MAX;
+    } else if (over_left > OVER_EDGE_MAX) {
         origin.x -= (over_left - OVER_EDGE_MAX);
-    if (over_top > OVER_EDGE_MAX)
-        origin.y -= (over_top - OVER_EDGE_MAX);
-    if (over_right > OVER_EDGE_MAX)
+    } else if (over_right > OVER_EDGE_MAX){
         origin.x += (over_right - OVER_EDGE_MAX);
-    if (over_bottom > OVER_EDGE_MAX)
+    }
+
+    if ((game_world.game_stage.top - game_world.game_stage.bottom) * SCALING < WINDOW_HEIGHT) {
+        origin.y -= over_top - (over_top + over_bottom) / 2 - OVER_EDGE_MAX;
+    } else if (over_top > OVER_EDGE_MAX) {
+        origin.y -= (over_top - OVER_EDGE_MAX);
+    } else if (over_bottom > OVER_EDGE_MAX) {
         origin.y += (over_bottom - OVER_EDGE_MAX);
+    }
 
 }
 
@@ -292,8 +300,11 @@ void main_loop_iter()
 
     ftime(&tb0);
 
+    // update window size
+    SDL_GetWindowSize(game_window, &WINDOW_WIDTH, &WINDOW_HEIGHT);
+
+    // define the origin
     if (!(game_mode & MODE_EXPLORE) && game_world.balls != NULL) {
-        // we need to define the origin FIRST
         center_ball(game_world.balls->b);
     }
 
@@ -376,17 +387,19 @@ Uint32 game_timer_callback(Uint32 interval_ms, void *user_data)
 }
 
 
-int init_sdl()
+int init_sdl(bool fullscreen)
 {
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER) != 0) {
         print_SDL_error("SDL_Init");
         return 1;
     }
 
+    int windowflags = fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_RESIZABLE;
+
     if (!(game_window = SDL_CreateWindow("tramp",
                                          SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                          WINDOW_WIDTH, WINDOW_HEIGHT,
-                                         SDL_WINDOW_SHOWN))) {
+                                         windowflags))) {
         print_SDL_error("SDL_CreateWindow");
         cleanup();
         return 1;
@@ -495,25 +508,25 @@ int parse_args(int argc, char *argv[],
 
 int main(int argc, char *argv[])
 {
-    char *flags[] = { "help", NULL };
+    char *flags[] = { "help", "fullscreen", NULL };
     char *opts[] = { "width", "height", "scaling", "interval", "slomo",
                      "mouse", NULL };
-    bool show_help = false;
+    bool flag_states[2];
     char *opt_vals[6];
     char *world_fn = "res/worldfile.txt";
     SDL_TimerID calc_timer;
     uint32_t calc_interval = 10;
 
     int n_args = parse_args(argc, argv, flags, opts, 1,
-                            &show_help, opt_vals, &world_fn);
+                            flag_states, opt_vals, &world_fn);
 
-    if (n_args < 0 || show_help) {
+    if (n_args < 0 || flag_states[0]) {
         fprintf(stderr, "trampball - balls bouncing on trampolines\n"
                         "\n"
-                        "  Usage: %s [-help] [-width 480] [-height 640] [-scaling 1]\n"
-                        "            [-interval 10] [-slomo 1] [-mouse 8] res/worldfile.txt\n",
+                        "  Usage: %s [-help] [-fullscreen] [-width 480] [-height 640]\n"
+                        "         [-scaling 1] [-interval 10] [-slomo 1] [-mouse 8] res/worldfile.txt\n",
                         argv[0]);
-        if (show_help) return 0;
+        if (flag_states[0]) return 0;
         else return 2;
     }
 
@@ -561,7 +574,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (init_sdl() != 0) return 1;
+    if (init_sdl(flag_states[1]) != 0) return 1;
 
     if (!init_game(world_fn)) {
         SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Error loading %s\n",
