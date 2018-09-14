@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(trampball)
+project(trampball C)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -44,14 +44,14 @@ if(WIN32)
 	set(GUI_APP "WIN32")
 endif()
 
-add_executable(game ${GUI_APP}
-					${src_dir}/main.c
-                    ${src_dir}/font.c
-                    ${src_dir}/game.c
-                    ${src_dir}/ball.c
-                    ${src_dir}/trampoline.c
-                    ${src_dir}/interaction.c)
-target_link_libraries(game ${SDL2_LIBRARY} ${EXTRA_LIB})
+add_executable(trampball ${GUI_APP}
+					     ${src_dir}/trampball.c
+                         ${src_dir}/font.c
+                         ${src_dir}/game.c
+                         ${src_dir}/ball.c
+                         ${src_dir}/trampoline.c
+                         ${src_dir}/interaction.c)
+target_link_libraries(trampball ${SDL2_LIBRARY} ${EXTRA_LIB})
 
 # Copy resource files to build directory
 if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
@@ -67,6 +67,6 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 	endforeach()
 
 	add_custom_target(resources ALL DEPENDS ${res_target_files})
-	add_dependencies(game resources)
+	add_dependencies(trampball resources)
 endif()
 

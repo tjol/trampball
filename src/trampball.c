@@ -9,7 +9,9 @@
 #include "game.h"
 #include "font.h"
 
-static Uint64 perf_freq;
+#include "trampball.h"
+
+/* local definitions */
 
 #define DEFAULT_WINDOW_WIDTH 480
 #define DEFAULT_WINDOW_HEIGHT 640
@@ -17,35 +19,30 @@ static Uint64 perf_freq;
 #define DEFAULT_SCALING 1.0
 #define OVER_EDGE_MAX 1
 
+/* extern variables */
 
-static int WINDOW_WIDTH = DEFAULT_WINDOW_WIDTH;
-static int WINDOW_HEIGHT = DEFAULT_WINDOW_HEIGHT;
-static double SCALING = DEFAULT_SCALING;
-static double MOUSE_SPEED_SCALE = DEFAULT_MOUSE_SPEED_SCALE;
+uint8_t game_mode = 0;
+struct mouse_control_state mouse_control_state;
+SDL_Point origin;
+int WINDOW_WIDTH = DEFAULT_WINDOW_WIDTH;
+int WINDOW_HEIGHT = DEFAULT_WINDOW_HEIGHT;
+double SCALING = DEFAULT_SCALING;
+double MOUSE_SPEED_SCALE = DEFAULT_MOUSE_SPEED_SCALE;
+
+/* internal state */
 
 static SDL_Window *game_window = NULL;
 static SDL_Renderer *renderer = NULL;
 static bool must_quit = false;
 static trampballfont_sdl font_perfect16_green;
 static trampballfont_sdl font_perfect16_red;
+static Uint64 perf_freq;
 
-#define MODE_RUNNING 0x01
-#define MODE_EXPLORE 0x02
-#define MODE_INTERACTIVE 0x04
-
-static uint8_t game_mode = 0;
 static uint16_t time_dilation = 1;
-
-static struct mouse_control_state {
-    vector2f original_gravity;
-    bool mouse_captured;
-} mouse_control_state;
 
 static double calc_time_us = 0;
 
-static SDL_Point origin;
-
-static void cleanup()
+void cleanup()
 {
     if (renderer != NULL) {
         SDL_DestroyRenderer(renderer);
@@ -302,7 +299,7 @@ void main_loop_iter()
 {
     static double fps = 10;
     static char hudline[255];
-    static Uint32 last_hud = 2000;
+    static uint32_t last_hud = 2000;
 
     struct trampoline_list *tl;
     struct ball_list *bl;
@@ -376,7 +373,7 @@ void main_loop_iter()
     fps = 1e3 / dt_ms;
 }
 
-Uint32 game_timer_callback(Uint32 interval_ms, void *user_data)
+static uint32_t game_timer_callback(uint32_t interval_ms, void *user_data)
 {
     static int calc_counter = 0;
 
@@ -398,7 +395,7 @@ Uint32 game_timer_callback(Uint32 interval_ms, void *user_data)
 }
 
 
-int init_sdl(bool fullscreen)
+static int init_sdl(bool fullscreen)
 {
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER) != 0) {
         print_SDL_error("SDL_Init");
@@ -442,13 +439,13 @@ int init_sdl(bool fullscreen)
     return 0;
 }
 
-int parse_args(int argc, char *argv[],
-               char *flags[],
-               char *opts_arg[],
-               int max_args,
-               bool out_flags[],
-               char *out_opt_values[],
-               char *out_args[])
+static int parse_args(int argc, char *argv[],
+                      char *flags[],
+                      char *opts_arg[],
+                      int max_args,
+                      bool out_flags[],
+                      char *out_opt_values[],
+                      char *out_args[])
 {
     int i;
 
@@ -525,7 +522,6 @@ int main(int argc, char *argv[])
     bool flag_states[2];
     char *opt_vals[6];
     char *world_fn = "res/worldfile.txt";
-    SDL_TimerID calc_timer;
     uint32_t calc_interval = 10;
 
     int n_args = parse_args(argc, argv, flags, opts, 1,
@@ -585,12 +581,28 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (init_sdl(flag_states[1]) != 0) return 1;
+    if(startup(flag_states[1], world_fn, calc_interval) != 0) {
+        cleanup();
+        return 1;
+    }
+
+    while (!must_quit) {
+        main_loop_iter();
+    }
+
+    cleanup();
+    return 0;
+}
+
+int startup(bool fullscreen, const char *world_fn, uint32_t calc_interval)
+{
+    SDL_TimerID calc_timer;
+
+    if (init_sdl(fullscreen) != 0) return 1;
 
     if (!init_game(world_fn)) {
         SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Error loading %s\n",
                         world_fn);
-        cleanup();
         return 1;
     }
 
@@ -604,14 +616,8 @@ int main(int argc, char *argv[])
 
     if (!calc_timer) {
         print_SDL_error("SDL_AddTimer");
-        cleanup();
         return 1;
     }
 
-    while (!must_quit) {
-        main_loop_iter();
-    }
-
-    cleanup();
     return 0;
 }
