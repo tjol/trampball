@@ -92,6 +92,8 @@ bool collide_ball_trampoline(ball *const b, trampoline *const t)
     attachment *a = find_ball_attached(t, b);
     bool any_new = false;
 
+    SDL_LockMutex(t->lock);
+
     if (a == NULL) {
         // this is a collision we didn't know about!
         a = new_attachment(t, n_anchors); // over-allocating, but that's OK
@@ -112,18 +114,25 @@ bool collide_ball_trampoline(ball *const b, trampoline *const t)
             j = 0;
         }
     }
+
     float dir_magn = sqrtf(direction.x*direction.x +
                            direction.y*direction.y);
     a->direction_n.x = direction.x / dir_magn;
     a->direction_n.y = direction.y / dir_magn;
+
+    SDL_LockMutex(b->lock);
 
     if (any_new) {
         b->speed.x = speed_x;
         b->speed.y = speed_y;
     }
 
+    SDL_UnlockMutex(b->lock);
+
     a->n_contacts = n_colliding;
     memcpy(a->contact_points, colliding_indices, n_colliding * sizeof(int));
+
+    SDL_UnlockMutex(t->lock);
 
     return true;
 }

@@ -12,6 +12,7 @@ trampoline *new_trampoline(int anchors)
     t->offsets = (vector2f *)(((char *) t) + sizeof(trampoline));
     t->speed = t->offsets + anchors;
     t->attached_objects = NULL;
+    t->lock = SDL_CreateMutex();
 
     t->n_anchors = anchors;
     t->k = TRAMPOLINE_SPRING_CONSTANT;
@@ -29,6 +30,7 @@ void free_trampoline(trampoline *const t)
 {
     while (t->attached_objects)
         remove_attachment(t, t->attached_objects);
+    SDL_DestroyMutex(t->lock);
     free(t);
 }
 
@@ -232,12 +234,16 @@ void iterate_trampoline(trampoline *const t, const float dt_ms)
            we'll need them to move the ball(s)! */
         memcpy(x_tmp, t->offsets, n_anchors * sizeof(vector2f));
 
+        SDL_LockMutex(t->lock);
+
         for (i=0; i<n_anchors; ++i) {
             t->offsets[i].x = t->offsets[i].x + dt * (v0[i].x + v1[i].x + v2[i].x + v3[i].x)/6;
             t->offsets[i].y = t->offsets[i].y + dt * (v0[i].y + v1[i].y + v2[i].y + v3[i].y)/6;
             t->speed[i].x = t->speed[i].x + dt * (a0[i].x + a1[i].x + a2[i].x + a3[i].x)/6;
             t->speed[i].y = t->speed[i].y + dt * (a0[i].y + a1[i].y + a2[i].y + a3[i].y)/6;
         }
+
+        SDL_UnlockMutex(t->lock);
 
         for (a = t->attached_objects; a != NULL; a = a->next) {
             vector2f dx = {0, 0};

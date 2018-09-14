@@ -11,6 +11,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <SDL.h>
 
 #define TRAMPOLINE_SPRING_CONSTANT 80000
 #define TRAMPOLINE_DAMPING 2.0f
@@ -32,6 +33,7 @@ typedef struct _trampoline {
     float k;
     float damping;
     float density;
+    SDL_mutex *lock;
     attachment *attached_objects;
     vector2f *offsets;
     vector2f *speed;

@@ -9,6 +9,7 @@
 #include "physics.h"
 #include <stdlib.h>
 #include <stdbool.h>
+#include <SDL.h>
 
 #define BALL_MASS 100.0f
 #define BALL_RADIUS 50.0f
@@ -22,11 +23,12 @@ typedef struct _ball {
     vector2f speed;
     vector2f applied_force;
     float bounce;
+    SDL_mutex *lock;
     // float spin;
 } ball;
 
 ball *new_ball();
-#define free_ball(b) free(b)
+void free_ball(ball *b);
 
 void iterate_ball(ball *const b, const float dt_ms);
 void force_advance_ball(ball *const b, const vector2f new_speed, const vector2f pos_delta);

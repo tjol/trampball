@@ -150,6 +150,9 @@ void handle_mouse(struct mouse_control_state *mouse_state)
 void draw_trampoline(const trampoline *const t)
 {
     SDL_Point *points = calloc(t->n_anchors, sizeof(SDL_Point));
+
+    SDL_LockMutex(t->lock);
+
     float x = origin.x + t->x * SCALING;
     int y = origin.y - t->y * SCALING;
     float delta = ((float)t->width) / (t->n_anchors-1) * SCALING;
@@ -160,6 +163,8 @@ void draw_trampoline(const trampoline *const t)
         points[i].y = (int) (y - t->offsets[i].y * SCALING);
         x += delta;
     }
+
+    SDL_UnlockMutex(t->lock);
 
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
     SDL_RenderDrawLines(renderer, points, t->n_anchors);
@@ -183,15 +188,21 @@ void draw_ball(const ball *const b)
 {
     float angle_step = M_PI * 2 / 60;
 
+    SDL_LockMutex(b->lock);
+
     float x0 = origin.x + b->position.x * SCALING;
     float y0 = origin.y - b->position.y * SCALING;
+    float radius = b->radius;
+
+    SDL_UnlockMutex(b->lock);
+
     SDL_Point points[60];
 
     float angle;
     int i;
     for (i=0, angle=0; i<60; ++i, angle += angle_step) {
-        points[i].x = x0 + b->radius * cosf(angle) * SCALING;
-        points[i].y = y0 + b->radius * sinf(angle) * SCALING;
+        points[i].x = x0 + radius * cosf(angle) * SCALING;
+        points[i].y = y0 + radius * sinf(angle) * SCALING;
     }
 
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
