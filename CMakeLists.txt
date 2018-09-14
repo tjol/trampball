@@ -28,7 +28,14 @@ option(LIBRARY_BUILD "Build a library instead of an executable" OFF)
 
 configure_file(${src_dir}/config.h.in config.h)
 
-find_package(SDL2 REQUIRED)
+
+if(NOT SDL2_LIBRARY OR NOT SDL2_INCLUDE_DIR)
+	if(LIBRARY_BUILD)
+		set(SDL2_BUILDING_LIBRARY ON)
+	endif()
+	find_package(SDL2 REQUIRED)
+endif()
+
 include_directories(${SDL2_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 set(GUI_APP)
