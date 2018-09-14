@@ -22,12 +22,15 @@
 /* extern variables */
 
 uint8_t game_mode = 0;
-struct mouse_control_state mouse_control_state;
 SDL_Point origin;
 int WINDOW_WIDTH = DEFAULT_WINDOW_WIDTH;
 int WINDOW_HEIGHT = DEFAULT_WINDOW_HEIGHT;
 double SCALING = DEFAULT_SCALING;
+
+#ifdef ENABLE_MOUSE
+struct mouse_control_state mouse_control_state;
 double MOUSE_SPEED_SCALE = DEFAULT_MOUSE_SPEED_SCALE;
+#endif
 
 /* internal state */
 
@@ -88,17 +91,22 @@ void handle_events()
                     break;
             }
             break;
+#ifdef ENABLE_MOUSE
         case SDL_MOUSEBUTTONDOWN:
             if (ev.button.button == SDL_BUTTON_LEFT) {
                 game_mode |= MODE_RUNNING;
             }
             break;
+#endif
         case SDL_QUIT:
             must_quit = true;
             break;
         }
     }
 }
+
+
+#ifdef ENABLE_MOUSE
 
 void init_mouse_support(struct mouse_control_state *mouse_state)
 {
@@ -143,6 +151,8 @@ void handle_mouse(struct mouse_control_state *mouse_state)
 
     mouse_tick = now;
 }
+
+#endif
 
 void draw_trampoline(const trampoline *const t)
 {
@@ -349,15 +359,22 @@ void main_loop_iter()
         render_string(&font_perfect16_red, renderer, "PAUSED",
                       (SDL_Point) {WINDOW_WIDTH/2, WINDOW_HEIGHT/2}, 3,
                       TEXT_RENDER_FLAG_CENTERED);
+        int line_x = WINDOW_WIDTH/2;
+        int line_y = WINDOW_HEIGHT/2 + 30;
+#ifdef ENABLE_MOUSE
         render_string(&font_perfect16_red, renderer, "Control gravity with your mouse",
-                      (SDL_Point) {WINDOW_WIDTH/2, WINDOW_HEIGHT/2 + 30}, 1,
+                      (SDL_Point) {line_x, line_y}, 1,
                       TEXT_RENDER_FLAG_CENTERED);
+        line_y += 16;
         render_string(&font_perfect16_red, renderer, "Click to start",
-                      (SDL_Point) {WINDOW_WIDTH/2, WINDOW_HEIGHT/2 + 46}, 1,
+                      (SDL_Point) {line_x, line_y}, 1,
                       TEXT_RENDER_FLAG_CENTERED);
+        line_y += 16;
+#endif
         render_string(&font_perfect16_red, renderer, "Press Q to quit",
-                      (SDL_Point) {WINDOW_WIDTH/2, WINDOW_HEIGHT/2 + 62}, 1,
+                      (SDL_Point) {line_x, line_y}, 1,
                       TEXT_RENDER_FLAG_CENTERED);
+        line_y += 16;
     }
 
     draw_gravity();
@@ -365,7 +382,10 @@ void main_loop_iter()
     SDL_RenderPresent(renderer);
 
     handle_events();
+
+#ifdef ENABLE_MOUSE
     handle_mouse(&mouse_control_state);
+#endif
 
     ftime(&tb1);
     long dt_ms = 1000 * (tb1.time - tb0.time) + (tb1.millitm - tb0.millitm);
@@ -518,7 +538,10 @@ int main(int argc, char *argv[])
 {
     char *flags[] = { "help", "fullscreen", NULL };
     char *opts[] = { "width", "height", "scaling", "interval", "slomo",
-                     "mouse", NULL };
+#ifdef ENABLE_MOUSE
+                     "mouse",
+#endif
+                     NULL };
     bool flag_states[2];
     char *opt_vals[6];
     char *world_fn = "res/worldfile.txt";
@@ -573,6 +596,7 @@ int main(int argc, char *argv[])
             return 2;
         }
     }
+#ifdef ENABLE_MOUSE
     if (opt_vals[5] != NULL) {
         MOUSE_SPEED_SCALE = strtod(opt_vals[5], &endp);
         if (*opt_vals[5] == '\0' || *endp != '\0') {
@@ -580,6 +604,7 @@ int main(int argc, char *argv[])
             return 2;
         }
     }
+#endif
 
     if(startup(flag_states[1], world_fn, calc_interval) != 0) {
         cleanup();
@@ -608,7 +633,9 @@ int startup(bool fullscreen, const char *world_fn, uint32_t calc_interval)
 
     perf_freq = SDL_GetPerformanceFrequency();
 
+#ifdef ENABLE_MOUSE
     init_mouse_support(&mouse_control_state);
+#endif
 
     game_mode = 0;
     calc_timer = SDL_AddTimer(calc_interval, game_timer_callback,

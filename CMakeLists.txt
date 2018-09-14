@@ -23,8 +23,12 @@ endif()
 
 set(src_dir "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
+option(ENABLE_MOUSE "Enable mouse control" ON)
+
+configure_file(${src_dir}/config.h.in config.h)
+
 find_package(SDL2 REQUIRED)
-include_directories(${SDL2_INCLUDE_DIR})
+include_directories(${SDL2_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 set(GUI_APP)
 
@@ -67,6 +71,6 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 	endforeach()
 
 	add_custom_target(resources ALL DEPENDS ${res_target_files})
-	add_dependencies(trampball resources)
+	add_dependencies(trampball	 resources)
 endif()
 
