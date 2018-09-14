@@ -1,1 +1,2 @@
 #cmakedefine ENABLE_MOUSE
+#cmakedefine LIBRARY_BUILD

@@ -459,6 +459,8 @@ static int init_sdl(bool fullscreen)
     return 0;
 }
 
+#ifndef LIBRARY_BUILD
+
 static int parse_args(int argc, char *argv[],
                       char *flags[],
                       char *opts_arg[],
@@ -618,6 +620,8 @@ int main(int argc, char *argv[])
     cleanup();
     return 0;
 }
+
+#endif /* ! LIBRARY_BUILD */
 
 int startup(bool fullscreen, const char *world_fn, uint32_t calc_interval)
 {

@@ -24,6 +24,7 @@ endif()
 set(src_dir "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 option(ENABLE_MOUSE "Enable mouse control" ON)
+option(LIBRARY_BUILD "Build a library instead of an executable" OFF)
 
 configure_file(${src_dir}/config.h.in config.h)
 
@@ -48,13 +49,19 @@ if(WIN32)
 	set(GUI_APP "WIN32")
 endif()
 
-add_executable(trampball ${GUI_APP}
-					     ${src_dir}/trampball.c
-                         ${src_dir}/font.c
-                         ${src_dir}/game.c
-                         ${src_dir}/ball.c
-                         ${src_dir}/trampoline.c
-                         ${src_dir}/interaction.c)
+set(trampball_SOURCES ${src_dir}/trampball.c
+                      ${src_dir}/font.c
+                      ${src_dir}/game.c
+                      ${src_dir}/ball.c
+                      ${src_dir}/trampoline.c
+                      ${src_dir}/interaction.c)
+
+if(LIBRARY_BUILD)
+	add_library(trampball SHARED ${trampball_SOURCES})
+else()
+	add_executable(trampball ${GUI_APP} ${trampball_SOURCES})
+endif()
+
 target_link_libraries(trampball ${SDL2_LIBRARY} ${EXTRA_LIB})
 
 # Copy resource files to build directory
