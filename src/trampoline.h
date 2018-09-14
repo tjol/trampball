@@ -4,8 +4,8 @@
     trampoline objects
 */
 
-#ifndef TRAMPOLINE_H
-#define TRAMPOLINE_H
+#ifndef TRAMPBALL_TRAMPOLINE_H
+#define TRAMPBALL_TRAMPOLINE_H
 #include "physics.h"
 #include "ball.h"
 
@@ -49,4 +49,4 @@ attachment *find_ball_attached(trampoline *const t, const ball *const b);
 
 void iterate_trampoline(trampoline *const t, const float dt_ms);
 
-#endif
+#endif /* TRAMPBALL_TRAMPOLINE_H */

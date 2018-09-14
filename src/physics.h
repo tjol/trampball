@@ -1,5 +1,5 @@
-#ifndef PHYSICS_H
-#define PHYSICS_H
+#ifndef TRAMPBALL_PHYSICS_H
+#define TRAMPBALL_PHYSICS_H
 
 /*
  * We need some units!
@@ -22,4 +22,4 @@ typedef struct _vector2i {
 
 extern vector2f gravity_accel;
 
-#endif
+#endif /* TRAMPBALL_PHYSICS_H */

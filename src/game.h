@@ -1,5 +1,5 @@
-#ifndef GAME_H
-#define GAME_H
+#ifndef TRAMPBALL_GAME_H
+#define TRAMPBALL_GAME_H
 
 #include "trampoline.h"
 #include "ball.h"
@@ -36,6 +36,4 @@ struct wall_list *add_wall(wall *const w);
 bool init_game(const char *const world_file_name);
 void game_iteration(const float dt_ms);
 
-#endif
-
-
+#endif /* TRAMPBALL_GAME_H */

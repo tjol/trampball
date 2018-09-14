@@ -1,5 +1,5 @@
-#ifndef INTERACTION_H
-#define INTERACTION_H
+#ifndef TRAMPBALL_INTERACTION_H
+#define TRAMPBALL_INTERACTION_H
 
 #include <stdbool.h>
 
@@ -27,4 +27,4 @@ bool collide_ball_wall(ball *const b, const wall *const w);
 #define new_wall() ((wall*)malloc(sizeof(wall)))
 #define free_wall(w) free(w)
 
-#endif
+#endif /* TRAMPBALL_INTERACTION_H */

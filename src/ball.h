@@ -4,8 +4,8 @@
     (rigid?) balls that fall
 */
 
-#ifndef BALL_H
-#define BALL_H
+#ifndef TRAMPBALL_BALL_H
+#define TRAMPBALL_BALL_H
 #include "physics.h"
 #include <stdlib.h>
 #include <stdbool.h>
@@ -33,4 +33,4 @@ void free_ball(ball *b);
 void iterate_ball(ball *const b, const float dt_ms);
 void force_advance_ball(ball *const b, const vector2f new_speed, const vector2f pos_delta);
 
-#endif
+#endif /* TRAMPBALL_BALL_H */

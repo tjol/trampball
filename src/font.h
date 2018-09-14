@@ -4,8 +4,8 @@
     super simple spritesheet font rendering
 */
 
-#ifndef FONT_H
-#define FONT_H
+#ifndef TRAMPBALL_FONT_H
+#define TRAMPBALL_FONT_H
 #include <SDL.h>
 #include <stdbool.h>
 
@@ -28,4 +28,4 @@ void render_string(const trampballfont_sdl *const font, SDL_Renderer *const ren,
                    const char *const str, SDL_Point location,
                    const float scale, const int flags);
 
-#endif
+#endif /* TRAMPBALL_FONT_H */
