@@ -267,8 +267,8 @@ void iterate_trampoline(trampoline *const t, const float dt_ms)
 
             float gravity_norm = gravity_accel.x * a->direction_n.y -
                                  gravity_accel.y * a->direction_n.x;
-            vector2f gravity_slip = {- dt * gravity_norm * a->direction_n.y,
-                                     + dt * gravity_norm * a->direction_n.x};
+            vector2f gravity_slip = {+ dt * gravity_norm * a->direction_n.y,
+                                     - dt * gravity_norm * a->direction_n.x};
 
             a->b->speed.x += gravity_slip.x;
             a->b->speed.y += gravity_slip.y;
