@@ -1,8 +1,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
-
-#include "compat.h"
+#include <SDL.h>
 #include "font.h"
 
 bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
@@ -49,10 +48,10 @@ bool init_trampballfont(SDL_Renderer *const ren, const char *const filename,
         SDL_RWclose(fp);
         return false;
     }
-    font->fontsize = ntohl(pars.fontsize);
-    font->chr_w = ntohl(pars.w);
-    font->chr_h = ntohl(pars.h);
-    font->n_chars = ntohl(pars.nchars);
+    font->fontsize = SDL_SwapBE32(pars.fontsize);
+    font->chr_w = SDL_SwapBE32(pars.w);
+    font->chr_h = SDL_SwapBE32(pars.h);
+    font->n_chars = SDL_SwapBE32(pars.nchars);
 
     total_pixels = font->n_chars * font->chr_w * font->chr_h;
     if (bitmode) {

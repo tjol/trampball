@@ -1,10 +1,15 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
-#include <fcntl.h>
-#include "compat.h"
+
+#ifdef _MSC_VER
+#  define strncasecmp(s1, s2, n) _strnicmp(s1, s2, n)
+#else
+#  include <strings.h>
+#endif
+
+#include <SDL.h>
 
 #include "game.h"
 
