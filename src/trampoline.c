@@ -89,15 +89,15 @@ attachment *find_ball_attached(trampoline *const t, const ball *const b)
     return NULL;
 }
 
-static inline void trampoline_advance(const vector2f *const speed_in,
-                                      const vector2f *const offset_in,
-                                      const float *const attached_mass,
-                                      vector2f *const speed_out,
-                                      vector2f *const accel_out,
-                                      const int n_anchors, const float dx,
-                                      const float dt, const float k,
-                                      const float dm,
-                                      const float damping)
+static void trampoline_advance(const vector2f *const restrict speed_in,
+                               const vector2f *const restrict offset_in,
+                               const float *const restrict attached_mass,
+                               vector2f *const restrict speed_out,
+                               vector2f *const restrict accel_out,
+                               const int n_anchors, const float dx,
+                               const float dt, const float k,
+                               const float dm,
+                               const float damping)
 {
     int i;
 
@@ -152,18 +152,18 @@ void iterate_trampoline(trampoline *const t, const float dt_ms)
     // See: https://math.stackexchange.com/questions/721076/help-with-using-the-runge-kutta-4th-order-method-on-a-system-of-2-first-order-od
     // This kind of code makes you wish you were using FORTRAN really...
     vector2f *buf_v_a = malloc(10 * n_anchors * sizeof(vector2f));
-    vector2f *v0 = buf_v_a;
-    vector2f *v1 = buf_v_a + 2 * n_anchors;
-    vector2f *v2 = buf_v_a + 4 * n_anchors;
-    vector2f *v3 = buf_v_a + 6 * n_anchors;
-    vector2f *a0 = buf_v_a + n_anchors;
-    vector2f *a1 = buf_v_a + 3 * n_anchors;
-    vector2f *a2 = buf_v_a + 5 * n_anchors;
-    vector2f *a3 = buf_v_a + 7 * n_anchors;
-    vector2f *x_tmp = buf_v_a + 8 * n_anchors;
-    vector2f *v_tmp = buf_v_a + 9 * n_anchors;
+    vector2f *restrict v0 = buf_v_a;
+    vector2f *restrict v1 = buf_v_a + 2 * n_anchors;
+    vector2f *restrict v2 = buf_v_a + 4 * n_anchors;
+    vector2f *restrict v3 = buf_v_a + 6 * n_anchors;
+    vector2f *restrict a0 = buf_v_a + n_anchors;
+    vector2f *restrict a1 = buf_v_a + 3 * n_anchors;
+    vector2f *restrict a2 = buf_v_a + 5 * n_anchors;
+    vector2f *restrict a3 = buf_v_a + 7 * n_anchors;
+    vector2f *restrict x_tmp = buf_v_a + 8 * n_anchors;
+    vector2f *restrict v_tmp = buf_v_a + 9 * n_anchors;
 
-    float *attached_mass = malloc(n_anchors * sizeof(float));
+    float *restrict attached_mass = malloc(n_anchors * sizeof(float));
 
     for (iters_left = 1, iters_total = 1; iters_left; --iters_left) {
         for (i=0; i<n_anchors; ++i)
