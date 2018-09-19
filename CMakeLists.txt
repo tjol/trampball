@@ -26,8 +26,11 @@ set(src_dir "${CMAKE_CURRENT_SOURCE_DIR}/src")
 option(ENABLE_MOUSE "Enable mouse control" ON)
 option(LIBRARY_BUILD "Build a library instead of an executable" OFF)
 
-configure_file(${src_dir}/config.h.in config.h)
+if(NOT DEFINED ASSET_ROOT)
+    set(ASSET_ROOT "res/")
+endif()
 
+configure_file(${src_dir}/config.h.in config.h)
 
 if(NOT SDL2_LIBRARY OR NOT SDL2_INCLUDE_DIR)
 	if(LIBRARY_BUILD)
@@ -73,15 +76,17 @@ target_link_libraries(trampball ${SDL2_LIBRARY} ${EXTRA_LIB})
 
 # Copy resource files to build directory
 if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+    set(ASSET_SRC "${CMAKE_CURRENT_SOURCE_DIR}/res")
+    set(ASSET_DEST "${CMAKE_CURRENT_BINARY_DIR}/res")
 	set(res_target_files "")
-	file(GLOB_RECURSE res_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/res/*")
+	file(GLOB_RECURSE res_files RELATIVE "${ASSET_SRC}" "${ASSET_SRC}/*")
 	foreach(res_file IN LISTS res_files)
 	    add_custom_command(
-	        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${res_file}"
-	        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/${res_file}" "${CMAKE_CURRENT_BINARY_DIR}/${res_file}"
-	        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${res_file}"
+	        OUTPUT "${ASSET_DEST}/${res_file}"
+	        COMMAND ${CMAKE_COMMAND} -E copy "${ASSET_SRC}/${res_file}" "${ASSET_DEST}/${res_file}"
+	        DEPENDS "${ASSET_SRC}/${res_file}"
 	    )
-	    set(res_target_files ${res_target_files} "${CMAKE_CURRENT_BINARY_DIR}/${res_file}")
+	    set(res_target_files ${res_target_files} "${ASSET_DEST}/${res_file}")
 	endforeach()
 
 	add_custom_target(resources ALL DEPENDS ${res_target_files})

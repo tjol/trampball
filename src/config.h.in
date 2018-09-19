@@ -1,2 +1,4 @@
 #cmakedefine ENABLE_MOUSE
 #cmakedefine LIBRARY_BUILD
+#define ASSET_ROOT "@ASSET_ROOT@"
+#define ASSET(name) (ASSET_ROOT name)

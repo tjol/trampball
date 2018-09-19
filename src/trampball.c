@@ -440,14 +440,14 @@ static int init_sdl(bool fullscreen)
         return 1;
     }
 
-    if (!init_trampballfont(renderer, "res/font/perfect_dos_vga/perfect16.tbf",
+    if (!init_trampballfont(renderer, ASSET("perfect16.tbf"),
                             0x11aa11ff, 0x00000000, &font_perfect16_green)) {
         SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Error loading font\n");
         cleanup();
         return 1;
     }
 
-    if (!init_trampballfont(renderer, "res/font/perfect_dos_vga/perfect16.tbf",
+    if (!init_trampballfont(renderer, ASSET("perfect16.tbf"),
                             0xbb1111ff, 0x00000000, &font_perfect16_red)) {
         SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Error loading font\n");
         cleanup();
@@ -546,7 +546,7 @@ int main(int argc, char *argv[])
                      NULL };
     bool flag_states[2];
     char *opt_vals[6];
-    char *world_fn = "res/worldfile.txt";
+    char *world_fn = ASSET("worldfile.txt");
     uint32_t calc_interval = 10;
 
     int n_args = parse_args(argc, argv, flags, opts, 1,

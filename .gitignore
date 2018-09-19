@@ -20,6 +20,8 @@ Makefile
 
 # IDE-specific things
 /.vs
+/.vscode
+*.kdev4
 /CMakeSettings.json
 /.project
 /.cproject
