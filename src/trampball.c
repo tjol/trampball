@@ -4,7 +4,6 @@
 #include <string.h>
 #include <time.h>
 #include <SDL.h>
-#include <sys/timeb.h>
 
 #include "game.h"
 #include "font.h"
@@ -314,9 +313,9 @@ void main_loop_iter()
     struct trampoline_list *tl;
     struct ball_list *bl;
     struct wall_list *wl;
-    struct timeb tb0, tb1;
+    uint64_t t0, t1;
 
-    ftime(&tb0);
+    t0 = SDL_GetPerformanceCounter();
 
     // update window size
     SDL_GetWindowSize(game_window, &WINDOW_WIDTH, &WINDOW_HEIGHT);
@@ -387,8 +386,9 @@ void main_loop_iter()
     handle_mouse(&mouse_control_state);
 #endif
 
-    ftime(&tb1);
-    long dt_ms = 1000 * (tb1.time - tb0.time) + (tb1.millitm - tb0.millitm);
+    t1 = SDL_GetPerformanceCounter();
+
+    long dt_ms = (t1 - t0) / (perf_freq / 1000);
 
     fps = 1e3 / dt_ms;
 }
