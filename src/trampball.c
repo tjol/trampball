@@ -35,7 +35,6 @@ double MOUSE_SPEED_SCALE = DEFAULT_MOUSE_SPEED_SCALE;
 
 static SDL_Window *game_window = NULL;
 static SDL_Renderer *renderer = NULL;
-static bool must_quit = false;
 static trampballfont_sdl font_perfect16_green;
 static trampballfont_sdl font_perfect16_red;
 static Uint64 perf_freq;
@@ -73,7 +72,7 @@ void handle_events()
         case SDL_KEYDOWN:
             switch (ev.key.keysym.sym) {
                 case SDLK_q:
-                    must_quit = true;
+                    game_mode |= MODE_QUITTING;
                     break;
                 case SDLK_ESCAPE:
                 case SDLK_SPACE:
@@ -98,7 +97,7 @@ void handle_events()
             break;
 #endif
         case SDL_QUIT:
-            must_quit = true;
+            game_mode |= MODE_QUITTING;
             break;
         }
     }
@@ -613,7 +612,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    while (!must_quit) {
+    while (!(game_mode & MODE_QUITTING)) {
         main_loop_iter();
     }
 

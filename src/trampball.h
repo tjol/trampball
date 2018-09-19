@@ -4,11 +4,16 @@
 #include <SDL.h>
 #include <stdint.h>
 
+#include "ball.h"
+#include "trampoline.h"
+#include "interaction.h"
+#include "physics.h"
 #include "config.h"
 
 #define MODE_RUNNING 0x01
 #define MODE_EXPLORE 0x02
 #define MODE_INTERACTIVE 0x04
+#define MODE_QUITTING 0x10
 
 extern uint8_t game_mode;
 
