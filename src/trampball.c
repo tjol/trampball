@@ -455,6 +455,8 @@ static int init_sdl(bool fullscreen)
         return 1;
     }
 
+    SDL_GetWindowSize(game_window, &WINDOW_WIDTH, &WINDOW_HEIGHT);
+
     origin = (SDL_Point) { 0, WINDOW_HEIGHT };
 
     return 0;
