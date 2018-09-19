@@ -25,6 +25,7 @@ SDL_Point origin;
 int WINDOW_WIDTH = DEFAULT_WINDOW_WIDTH;
 int WINDOW_HEIGHT = DEFAULT_WINDOW_HEIGHT;
 double SCALING = DEFAULT_SCALING;
+double UI_SCALING = DEFAULT_SCALING;
 
 #ifdef ENABLE_MOUSE
 struct mouse_control_state mouse_control_state;
@@ -251,11 +252,12 @@ void draw_edges(const stage *const s)
 
 void draw_gravity()
 {
-    SDL_Point start = { WINDOW_WIDTH-50, 50 };
+    SDL_Point start = { WINDOW_WIDTH-50 * UI_SCALING, 50 * UI_SCALING };
     int dx = gravity_accel.x / 20.0f;
     int dy = -gravity_accel.y / 20.0f;
 
-    SDL_Point end = { start.x + dx, start.y + dy };
+    SDL_Point end = { start.x + dx * UI_SCALING,
+                      start.y + dy * UI_SCALING };
 
     double arrow_len = sqrt(dx*dx + dy*dy);
     double dx_hat = dx / arrow_len;
@@ -351,28 +353,28 @@ void main_loop_iter()
     }
 
     render_string(&font_perfect16_green, renderer, hudline,
-                  (SDL_Point) {40, 10}, 1, 0);
+                  (SDL_Point) {40 * UI_SCALING, 10 * UI_SCALING}, 1 * UI_SCALING, 0);
 
     if (!(game_mode & MODE_RUNNING)) {
         render_string(&font_perfect16_red, renderer, "PAUSED",
-                      (SDL_Point) {WINDOW_WIDTH/2, WINDOW_HEIGHT/2}, 3,
+                      (SDL_Point) {WINDOW_WIDTH/2, WINDOW_HEIGHT/2}, 3 * UI_SCALING,
                       TEXT_RENDER_FLAG_CENTERED);
         int line_x = WINDOW_WIDTH/2;
-        int line_y = WINDOW_HEIGHT/2 + 30;
+        int line_y = WINDOW_HEIGHT/2 + 30 * UI_SCALING;
 #ifdef ENABLE_MOUSE
         render_string(&font_perfect16_red, renderer, "Control gravity with your mouse",
-                      (SDL_Point) {line_x, line_y}, 1,
+                      (SDL_Point) {line_x, line_y}, 1 * UI_SCALING,
                       TEXT_RENDER_FLAG_CENTERED);
-        line_y += 16;
+        line_y += 16 * UI_SCALING;
         render_string(&font_perfect16_red, renderer, "Click to start",
-                      (SDL_Point) {line_x, line_y}, 1,
+                      (SDL_Point) {line_x, line_y}, 1 * UI_SCALING,
                       TEXT_RENDER_FLAG_CENTERED);
-        line_y += 16;
+        line_y += 16 * UI_SCALING;
 #endif
         render_string(&font_perfect16_red, renderer, "Press Q to quit",
-                      (SDL_Point) {line_x, line_y}, 1,
+                      (SDL_Point) {line_x, line_y}, 1 * UI_SCALING,
                       TEXT_RENDER_FLAG_CENTERED);
-        line_y += 16;
+        line_y += 16 * UI_SCALING;
     }
 
     draw_gravity();
@@ -538,13 +540,13 @@ static int parse_args(int argc, char *argv[],
 int main(int argc, char *argv[])
 {
     char *flags[] = { "help", "fullscreen", NULL };
-    char *opts[] = { "width", "height", "scaling", "interval", "slomo",
+    char *opts[] = { "width", "height", "scaling", "interval", "slomo", "uiscaling",
 #ifdef ENABLE_MOUSE
                      "mouse",
 #endif
                      NULL };
     bool flag_states[2];
-    char *opt_vals[6];
+    char *opt_vals[7];
     char *world_fn = ASSET("worldfile.txt");
     uint32_t calc_interval = 10;
 
@@ -555,7 +557,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "trampball - balls bouncing on trampolines\n"
                         "\n"
                         "  Usage: %s [-help] [-fullscreen] [-width 480] [-height 640]\n"
-                        "         [-scaling 1] [-interval 10] [-slomo 1] [-mouse 8] res/worldfile.txt\n",
+                        "         [-scaling 1] [-uiscaling 1] [-interval 10] [-slomo 1] [-mouse 8] res/worldfile.txt\n",
                         argv[0]);
         if (flag_states[0]) return 0;
         else return 2;
@@ -597,11 +599,18 @@ int main(int argc, char *argv[])
             return 2;
         }
     }
-#ifdef ENABLE_MOUSE
     if (opt_vals[5] != NULL) {
-        MOUSE_SPEED_SCALE = strtod(opt_vals[5], &endp);
+        UI_SCALING = strtod(opt_vals[5], &endp);
         if (*opt_vals[5] == '\0' || *endp != '\0') {
             fprintf(stderr, "not a number: %s\n", opt_vals[5]);
+            return 2;
+        }
+    }
+#ifdef ENABLE_MOUSE
+    if (opt_vals[6] != NULL) {
+        MOUSE_SPEED_SCALE = strtod(opt_vals[6], &endp);
+        if (*opt_vals[6] == '\0' || *endp != '\0') {
+            fprintf(stderr, "not a number: %s\n", opt_vals[6]);
             return 2;
         }
     }

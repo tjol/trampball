@@ -30,6 +30,7 @@ extern SDL_Point origin;
 extern int WINDOW_WIDTH;
 extern int WINDOW_HEIGHT;
 extern double SCALING;
+extern double UI_SCALING;
 
 void cleanup();
 void handle_events();
