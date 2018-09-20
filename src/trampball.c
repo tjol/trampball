@@ -90,13 +90,11 @@ void handle_events()
                     break;
             }
             break;
-#ifdef ENABLE_MOUSE
         case SDL_MOUSEBUTTONDOWN:
             if (ev.button.button == SDL_BUTTON_LEFT) {
-                game_mode |= MODE_RUNNING;
+                game_mode ^= MODE_RUNNING;
             }
             break;
-#endif
         case SDL_QUIT:
             game_mode |= MODE_QUITTING;
             break;
